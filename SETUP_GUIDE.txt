@@ -1,0 +1,195 @@
+================================================================
+SUSHANT PRINTS — ORDER AND LABELLING SYSTEM
+Setup guide v1.0
+================================================================
+
+WHAT THIS DOES
+--------------
+Book an order with the customer details and the design lines.
+The system gives it an order number like SP-2607-0042, prints an
+A4 order form with a QR code on it, and keeps the whole record.
+
+Anyone in the factory can then scan that QR on a phone and see the
+full order on screen: party, mobile, agent, every design with its
+quantity and remarks, the master quantity, and the current status.
+They can move the status along from the same screen.
+
+WHAT YOU NEED
+-------------
+A GitHub account, a Railway account, and about fifteen minutes.
+This runs on the same setup as the stock system, so if you have
+done that one before, none of this will be new.
+
+================================================================
+STEP 1 — PUT THE CODE ON GITHUB
+================================================================
+1. Go to https://github.com/new
+2. Repository name: sushant-order-system
+3. Set it to Private
+4. Click Create repository
+5. On the next screen click "uploading an existing file"
+6. Drag in all of these:
+     server.js
+     package.json
+     railway.toml
+     public/          (the whole folder)
+7. Click Commit changes
+
+================================================================
+STEP 2 — ADD THE DATABASE ON RAILWAY
+================================================================
+This is the step that keeps your orders safe. Skip it and the
+data disappears every time the app redeploys.
+
+1. Go to https://railway.app
+2. Open your project, or create a new one
+3. Click "+ New", then Database, then Add PostgreSQL
+4. Railway sets DATABASE_URL for you. Nothing else to configure.
+
+================================================================
+STEP 3 — DEPLOY THE APP
+================================================================
+1. In the Railway project click "+ New", then GitHub Repo
+2. Pick sushant-order-system
+3. Wait three or four minutes for the build to go green
+
+================================================================
+STEP 4 — SET YOUR PASSWORD AND PINS
+================================================================
+1. Click the app service box in Railway
+2. Open the Variables tab
+3. Add these four:
+
+     APP_PASSWORD   your sign-in password, for example sushant2026
+     SESSION_SECRET any long random text, for example k9x2mq74nz
+     ADMIN_PIN      four digits, needed to delete an order
+     CHANGE_PIN     four digits, kept for sensitive changes
+
+4. Click Deploy
+
+Keep ADMIN_PIN with the owner only. It is the one thing standing
+between a wrong tap and a deleted order.
+
+================================================================
+STEP 5 — GET YOUR LINK
+================================================================
+1. Click the app service, then Settings
+2. Under Networking click Generate Domain
+3. You get something like sushant-order-system.up.railway.app
+4. Save this link and bookmark it on every phone in the factory
+
+This link matters more than usual here. The QR codes on your
+printed order forms point at it. If you ever change the domain,
+old printed forms will stop opening, so pick one and keep it.
+
+================================================================
+STEP 6 — FIRST RUN
+================================================================
+1. Open the link in Chrome and sign in
+2. Go to Settings and check the letterhead details are right.
+   The company name, address, GST and phone numbers are already
+   filled in from your card. They print at the top of every form.
+3. Go to Designs and parties, add your regular design names.
+   You can also just type a new design name while booking an
+   order and it gets added to the list on its own.
+4. Book a test order and print it
+5. Open the Scan QR tab on a phone, scan the printed form, and
+   check the whole order comes up
+
+================================================================
+HOW THE DAY RUNS
+================================================================
+Booking      New order tab. Fill Part A, add design lines in
+             Part B, put in the master quantity, then Save and
+             print order form.
+
+Repeat party Start typing the party name. If they have ordered
+             before, the address, mobile, GST, transport and
+             agent fill in by themselves. Change whatever is
+             different and carry on.
+
+On the floor Scan QR tab, open the camera, point it at the form.
+             The order opens with every detail on one screen.
+             Use Update status to move it along:
+             Pending, In Process, Ready, Delivered.
+
+Looking up   Orders tab. Search by order number, party name,
+             mobile, or even a design name.
+
+Month end    Reports tab. Pick the dates, run the report, then
+             Download CSV.
+
+================================================================
+ORDER NUMBERS
+================================================================
+They look like SP-2607-0042.
+
+  SP    Sushant Prints
+  26    the year
+  07    the month
+  0042  the forty second order that month
+
+The count starts again at 0001 on the first of every month.
+Two people booking at the same moment cannot get the same number.
+
+================================================================
+OPTIONAL: NIGHTLY BACKUP TO GOOGLE SHEETS
+================================================================
+Every night at midnight the app can copy the day's orders into a
+Google Sheet, one tab per date. To switch it on, add these three
+Railway variables:
+
+  GOOGLE_SHEET_ID       from your Google Sheet URL
+  GOOGLE_CLIENT_EMAIL   from the service account JSON
+  GOOGLE_PRIVATE_KEY    from the service account JSON
+
+Then use "Run backup now" in Settings to check it works.
+Ask your developer to set up the Google service account.
+
+================================================================
+RUNNING COST
+================================================================
+Railway app        about 5 dollars a month
+Railway Postgres   about 5 dollars a month
+Together           roughly 850 to 1000 rupees a month
+
+================================================================
+USING IT ON A PHONE
+================================================================
+1. Open the link in Chrome on Android, or Safari on iPhone
+2. Sign in once. It stays signed in for thirty days.
+3. Open the browser menu and choose Add to Home Screen.
+   It then opens like a normal app.
+
+The camera only works over https, which your Railway link already
+is, so scanning works out of the box.
+
+================================================================
+IF SOMETHING GOES WRONG
+================================================================
+App will not load
+     Check the Railway dashboard. Is the service green?
+
+"DATABASE_URL not set"
+     Step 2 was missed. Add the PostgreSQL database.
+
+Camera will not open
+     Android needs Chrome, iPhone needs Safari. Check that the
+     browser has camera permission in the phone settings.
+
+Print window does not appear
+     The browser blocked the pop-up. Allow pop-ups for the site
+     and press Print again.
+
+Scanned QR says no order found
+     The form was probably printed from a different domain than
+     the one you are on now. Type the order number into the Scan
+     tab instead. It will find it.
+
+Forgot the password
+     Railway, Variables, change APP_PASSWORD, redeploy.
+
+Build failed
+     Send the Railway build log to your developer.
+
+================================================================
