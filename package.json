@@ -1,7 +1,7 @@
 {
   "name": "sushant-order-system",
-  "version": "1.0.0",
-  "description": "Order and labelling system — Sushant Prints Pvt Ltd, Surat",
+  "version": "2.0.0",
+  "description": "QR labelling and counter billing — Sushant Prints Pvt Ltd, Surat",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
@@ -10,5 +10,5 @@
     "pg": "^8.11.3",
     "googleapis": "^140.0.0"
   },
-  "engines": { "node": ">=18.0.0" }
+  "engines": { "node": "22.x" }
 }
