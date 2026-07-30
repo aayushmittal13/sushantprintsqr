@@ -429,7 +429,7 @@ th:last-child,td:last-child{padding-right:4px}
           </div>
 
           <div class="cart">
-            <div class="cart-h"><span class="cart-h-t">Cart</span><span class="cart-count" id="cart-count">0 pieces</span></div>
+            <div class="cart-h"><span class="cart-h-t">Scanned pieces</span><span class="cart-count" id="cart-count">0 pieces</span></div>
             <div class="cart-list" id="cart-list"></div>
             <div class="cart-foot" id="cart-foot" style="display:none">
               <div class="cart-tot"><span class="cart-tot-l">Pieces</span><span class="cart-tot-v" id="cart-pieces">0</span></div>
@@ -438,8 +438,8 @@ th:last-child,td:last-child{padding-right:4px}
                 <input type="text" id="cart-disc" inputmode="numeric" value="" placeholder="0" style="width:96px;height:34px;text-align:right;font-family:var(--mono)" oninput="drawCart()"></div>
               <div class="cart-net"><span class="cart-net-l">To pay</span><span class="cart-net-v" id="cart-net">₹0</span></div>
               <div class="cart-actions">
-                <button class="b b-gold b-big b-full" onclick="openCheckout()">Bill &amp; print</button>
-                <button class="b b-out b-full b-sm" onclick="clearCart()">Empty cart</button>
+                <button class="b b-gold b-big b-full" onclick="openCheckout()">Confirm order</button>
+                <button class="b b-out b-full b-sm" onclick="clearCart()">Clear all</button>
               </div>
             </div>
           </div>
@@ -664,7 +664,7 @@ th:last-child,td:last-child{padding-right:4px}
 
 <!-- ═══════════ MODALS ═══════════ -->
 <div class="modal" id="m-checkout"><div class="mbox">
-  <div class="mtitle">Bill this cart</div>
+  <div class="mtitle">Confirm order</div>
   <div class="mdesc" id="co-desc">Customer details are optional. Fill them in only for a proper bill.</div>
   <div class="f"><label for="co-party">Party name</label>
     <input type="text" id="co-party" list="dl-party" autocomplete="off" placeholder="Leave blank for a quick bill" oninput="onCoParty()"><datalist id="dl-party"></datalist></div>
@@ -675,7 +675,7 @@ th:last-child,td:last-child{padding-right:4px}
   <div class="f"><label for="co-transport">Transport</label><input type="text" id="co-transport"></div>
   <div class="f"><label for="co-remarks">Remarks</label><input type="text" id="co-remarks"></div>
   <div class="bar" style="margin-top:4px">
-    <button class="b b-gold" id="co-btn" onclick="checkout()">Confirm &amp; print bill</button>
+    <button class="b b-gold" id="co-btn" onclick="checkout()">Save &amp; go to order</button>
     <button class="b b-out" onclick="shut('m-checkout')">Back</button>
   </div>
   <div class="mmsg" id="co-msg"></div>
@@ -692,11 +692,11 @@ th:last-child,td:last-child{padding-right:4px}
 </div></div>
 
 <div class="cam" id="cam">
-  <div class="cam-live">In cart: <b id="cam-count">0</b></div>
+  <div class="cam-live">Scanned: <b id="cam-count">0</b></div>
   <div class="cam-f" id="cam-f"><video id="cam-video" playsinline muted></video></div>
   <div class="cam-t" id="cam-t"></div>
   <div class="cam-r" id="cam-r"></div>
-  <button class="cam-done" onclick="closeCam()">Done, review cart</button>
+  <button class="cam-done" id="cam-done-btn" onclick="closeCam()">Done</button>
 </div>
 
 <datalist id="dl-design-plain"></datalist>
@@ -946,7 +946,7 @@ function addToCart(item){
   return true;
 }
 function removeFromCart(code){cart=cart.filter(c=>c.item_code!==code);drawCart()}
-function clearCart(){if(cart.length&&!confirm('Empty the cart? Nothing is billed yet.'))return;cart=[];drawCart()}
+function clearCart(){if(cart.length&&!confirm('Clear all scanned pieces? Nothing is saved yet.'))return;cart=[];drawCart()}
 function cartTotal(){return cart.reduce((s,c)=>s+money(c.rate),0)}
 
 function drawCart(flashLast){
@@ -967,7 +967,7 @@ function drawCart(flashLast){
   $('cart-total').textContent=rupee(total);
   $('cart-net').textContent=rupee(net);
   foot.style.display='';
-  if($('cam').classList.contains('on'))$('cam-count').textContent=cart.length;
+  if($('cam').classList.contains('on'))$('cam-count').textContent=cart.length;const _db=$('cam-done-btn');if(_db)_db.textContent='Done';
 }
 
 async function typeScan(){
@@ -1020,12 +1020,11 @@ async function checkout(){
   }
   const orderNo=r.orderNo;
   shut('m-checkout');
-  // print, then reset the counter for the next customer
-  const full=await api('GET','/api/orders/'+encodeURIComponent(orderNo));
   cart=[];$('cart-disc').value='';['co-party','co-mobile','co-gst','co-transport','co-remarks'].forEach(id=>$(id).value='');
   drawCart();stats();
-  msg('counter-msg','ok','Bill '+orderNo+' done.',6000);
-  if(full.order)printBill(full.order,full.lines||[]);
+  // Go straight to the order detail page. The Print button there is a direct
+  // user tap so it will never be blocked on mobile. No auto-print popup.
+  openOrder(orderNo);
 }
 
 /* ═══════════ CAMERA (continuous scanning) ═══════════ */
@@ -1069,13 +1068,16 @@ async function camHit(raw){
   if(r.status==='ok'){
     if(inCart(r.item.item_code)){
       f.classList.add('dup');setTimeout(()=>f.classList.remove('dup'),350);
-      $('cam-t').style.color='#FBBF24';$('cam-t').textContent='Already in cart';return;
+      $('cam-t').style.color='#FBBF24';$('cam-t').textContent='Already scanned';return;
     }
     addToCart(r.item);
     f.classList.add('hit');setTimeout(()=>f.classList.remove('hit'),350);
     $('cam-r').textContent=r.item.design+' · '+rupee(r.item.rate);
-    $('cam-t').style.color='#34D399';$('cam-t').textContent='Added. Scan the next piece.';
+    $('cam-t').style.color='#34D399';$('cam-t').textContent='Piece added — scan the next one, or tap Done.';
     $('cam-count').textContent=cart.length;
+    // pulse the Done button so it is obvious
+    const db=$('cam-done-btn');if(db){db.textContent='Done ('+cart.length+' piece'+(cart.length===1?'':'s')+')';
+      db.style.transform='scale(1.08)';setTimeout(()=>{db.style.transform=''},300);}
     return;
   }
   if(r.status==='sold'){$('cam-t').style.color='#F87171';$('cam-t').textContent='Already sold, cannot add.';return}
