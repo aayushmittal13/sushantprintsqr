@@ -159,16 +159,25 @@ async function initDB() {
   await run(`CREATE INDEX IF NOT EXISTS idx_orders_no     ON orders(order_no)`);
   await run(`CREATE INDEX IF NOT EXISTS idx_lines_order   ON order_lines(order_no)`);
 
-  // Migrations for databases created before manual (typed) orders existed.
-  // Each is a no-op if the column is already there, so it is safe on every boot.
-  await run(`ALTER TABLE orders      ADD COLUMN IF NOT EXISTS order_type TEXT NOT NULL DEFAULT 'scanned'`);
-  await run(`ALTER TABLE orders      ADD COLUMN IF NOT EXISTS master_qty TEXT DEFAULT ''`);
-  await run(`ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS qty        TEXT DEFAULT ''`);
-  await run(`ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS remarks    TEXT DEFAULT ''`);
+  // Migrations — run on every boot, safe no-ops once columns exist.
+  // The live database was created by v1/v2 which had a different orders schema.
+  // Every column the v3 server reads or writes that didn't exist before needs
+  // an ADD COLUMN IF NOT EXISTS guard here.
+  await run(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS piece_count    INTEGER          NOT NULL DEFAULT 0`);
+  await run(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS total_amount   NUMERIC(14,2)    NOT NULL DEFAULT 0`);
+  await run(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount       NUMERIC(14,2)    NOT NULL DEFAULT 0`);
+  await run(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS net_amount     NUMERIC(14,2)    NOT NULL DEFAULT 0`);
+  await run(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS remarks        TEXT             DEFAULT ''`);
+  await run(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type     TEXT             NOT NULL DEFAULT 'scanned'`);
+  await run(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS master_qty     TEXT             DEFAULT ''`);
+  // order_lines is the v3 equivalent of the old order_items table. Both exist
+  // independently; old orders link to order_items, new ones to order_lines.
+  await run(`ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS qty       TEXT             DEFAULT ''`);
+  await run(`ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS remarks   TEXT             DEFAULT ''`);
   await run(`ALTER TABLE order_lines ALTER COLUMN item_code SET DEFAULT ''`);
-  // designs gained default_rate and sort_order when the v3 QR-label model was added.
-  await run(`ALTER TABLE designs ADD COLUMN IF NOT EXISTS default_rate NUMERIC(12,2) DEFAULT 0`);
-  await run(`ALTER TABLE designs ADD COLUMN IF NOT EXISTS sort_order   INTEGER DEFAULT 9999`);
+  // designs gained these columns in v3.
+  await run(`ALTER TABLE designs ADD COLUMN IF NOT EXISTS default_rate  NUMERIC(12,2)    DEFAULT 0`);
+  await run(`ALTER TABLE designs ADD COLUMN IF NOT EXISTS sort_order    INTEGER          DEFAULT 9999`);
 
   const defaults = {
     company_name:    'Sushant Prints Pvt Ltd',
