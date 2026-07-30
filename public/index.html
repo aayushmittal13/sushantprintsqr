@@ -469,7 +469,8 @@ th:last-child,td:last-child{padding-right:4px}
             </div>
           </div>
           <div class="bar" style="margin-top:16px">
-            <button class="b b-ink b-big" id="gen-btn" onclick="generate()">Generate &amp; print labels</button>
+            <button class="b b-ink b-big" id="gen-btn" onclick="generate()">Generate labels</button>
+            <button class="b b-out b-big" id="gen-print-btn" style="display:none" onclick="printLastBatch()">Print labels</button>
             <div class="f" style="margin:0;min-width:150px">
               <select id="gen-size" style="height:56px">
                 <option value="3">Small, 18 a sheet</option>
@@ -536,7 +537,7 @@ th:last-child,td:last-child{padding-right:4px}
             <div class="f"><label for="mn-mrem">Order remarks</label><input type="text" id="mn-mrem" placeholder="e.g. before Rakhi"></div>
           </div>
           <div class="bar" style="margin-top:4px">
-            <button class="b b-ink b-big" id="mn-btn" onclick="saveManual()">Save &amp; print order</button>
+            <button class="b b-ink b-big" id="mn-btn" onclick="reviewManual()">Review &amp; save order</button>
             <button class="b b-out" onclick="resetManual()">Clear</button>
           </div>
         </div></div>
@@ -691,6 +692,18 @@ th:last-child,td:last-child{padding-right:4px}
   <div class="mmsg" id="cn-msg"></div>
 </div></div>
 
+<!-- Review order preview modal (typed Order form) -->
+<div class="modal" id="m-review"><div class="mbox" style="max-width:560px">
+  <div class="mtitle">Review order</div>
+  <div class="mdesc">Check the details before saving. Nothing is saved yet.</div>
+  <div id="review-body" style="font-size:13.5px;line-height:1.7;margin-bottom:18px;border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--bg)"></div>
+  <div class="bar">
+    <button class="b b-ink b-big" id="review-save-btn" onclick="confirmManual()">Save order</button>
+    <button class="b b-out" onclick="shut('m-review')">Edit</button>
+  </div>
+  <div class="mmsg" id="review-msg"></div>
+</div></div>
+
 <div class="cam" id="cam">
   <div class="cam-live">Scanned: <b id="cam-count">0</b></div>
   <div class="cam-f" id="cam-f"><video id="cam-video" playsinline muted></video></div>
@@ -718,7 +731,7 @@ function money(x){const n=parseFloat(String(x).replace(/[^0-9.\-]/g,''));return 
 function rupee(n){return '₹'+money(n).toLocaleString('en-IN',{maximumFractionDigits:0})}
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function isoPfx(i){if(!i)return'';const a=i.split('-');return a[2]+'-'+MON[+a[1]-1]+'-'+a[0]}
-function pill(s){const lbl={in_stock:'In stock',sold:'Sold',in_cart:'In cart',cancelled:'Cancelled',Billed:'Billed',Cancelled:'Cancelled'}[s]||s;
+function pill(s){const lbl={in_stock:'In stock',sold:'Sold',in_cart:'Scanning',cancelled:'Cancelled',Billed:'Billed',Cancelled:'Cancelled'}[s]||s;
   return '<span class="pill st-'+s+'"><i></i>'+esc(lbl)+'</span>'}
 function url(code){return location.origin+'/o/'+encodeURIComponent(code)}
 function ico(n){const m={ok:'<path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -756,7 +769,7 @@ function go(p){
   const t=$('p-'+p);if(t)t.classList.add('on');
   document.querySelectorAll('.nav-item,.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
   window.scrollTo(0,0);
-  if(p==='generate'){loadBatches();drawGenPreview()}
+  if(p==='generate'){loadBatches();drawGenPreview();lastBatch=null;const pb=$('gen-print-btn');if(pb)pb.style.display='none';}
   if(p==='counter')setTimeout(()=>{const s=$('scan-in');if(s)s.focus()},50);
   if(p==='manual')startManual();
   if(p==='stock')loadStock();
@@ -781,7 +794,7 @@ async function start(){
   stats();drawCart();
   setInterval(stats,60000);
   go('generate');   // land on Generate by default
-  // A scanned link: if it's a bill, open it; if it's an item, drop it in the cart.
+  // A scanned link: if it's a bill, open it; if it's an item — drop it in the scanned list.
   if(deepLink){const code=deepLink;deepLink=null;history.replaceState({},'','/');
     const r=await api('POST','/api/scan',{code});
     if(r.status==='order')openOrder(r.orderNo);
@@ -870,23 +883,61 @@ function mnCollect(){
   });
   return lines;
 }
-async function saveManual(){
+let _mnParty=null,_mnLines=null,_mnMqty='',_mnRem='';
+function reviewManual(){
   const party={partyName:v('mn-party'),mobile:v('mn-mobile'),gstNo:v('mn-gst'),address:v('mn-addr'),
     contactPerson:v('mn-contact'),transport:v('mn-transport'),agentName:v('mn-agent'),agentAddress:v('mn-agentaddr')};
   const lines=mnCollect();
   if(!party.partyName){msg('mn-msg','err','Enter the party name.',5000);$('mn-party').focus();return}
   if(!party.mobile){msg('mn-msg','err','Enter a mobile number.',5000);$('mn-mobile').focus();return}
   if(!lines.length){msg('mn-msg','err','Add at least one design line.',5000);return}
-  $('mn-btn').disabled=true;
-  const r=await api('POST','/api/orders/manual',{party,lines,masterQty:v('mn-mqty'),remarks:v('mn-mrem')});
-  $('mn-btn').disabled=false;
-  if(r.error){msg('mn-msg','err',r.error,6000);return}
-  msg('mn-msg','ok','Order saved: '+r.orderNo,6000);
-  // pull the full order back and print the docket
-  const full=await api('GET','/api/orders/'+encodeURIComponent(r.orderNo));
-  if(full.order)printOrderDocket(full.order,full.lines||[]);
+  _mnParty=party;_mnLines=lines;_mnMqty=v('mn-mqty');_mnRem=v('mn-mrem');
+  // Build preview HTML
+  const lineRows=lines.map((l,i)=>'<tr><td style="color:var(--muted);padding:4px 8px">'+(i+1)+'</td>'+
+    '<td style="font-weight:500;padding:4px 8px">'+esc(l.design)+'</td>'+
+    '<td style="padding:4px 8px;color:var(--muted)">'+esc(l.qty||'—')+'</td>'+
+    '<td style="padding:4px 8px;font-family:var(--mono)">'+(l.rate>0?rupee(l.rate):'—')+'</td>'+
+    '<td style="padding:4px 8px;color:var(--muted)">'+esc(l.remarks||'')+'</td></tr>').join('');
+  $('review-body').innerHTML=
+    '<div style="margin-bottom:12px"><b>'+esc(party.partyName)+'</b>'+
+      (party.mobile?' · '+esc(party.mobile):'')+
+      (party.gstNo?' · GST '+esc(party.gstNo.toUpperCase()):'')+
+      (party.address?'<br><span style="color:var(--muted)">'+esc(party.address)+'</span>':'')+
+      (party.transport?'<br><span style="color:var(--muted)">Transport: '+esc(party.transport)+'</span>':'')+
+      (party.agentName?'<br><span style="color:var(--muted)">Agent: '+esc(party.agentName)+'</span>':'')+
+    '</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>'+
+      '<th style="padding:4px 8px;text-align:left;border-bottom:1px solid var(--line);color:var(--muted);font-weight:500">#</th>'+
+      '<th style="padding:4px 8px;text-align:left;border-bottom:1px solid var(--line)">Design</th>'+
+      '<th style="padding:4px 8px;border-bottom:1px solid var(--line)">Qty</th>'+
+      '<th style="padding:4px 8px;border-bottom:1px solid var(--line)">Rate</th>'+
+      '<th style="padding:4px 8px;border-bottom:1px solid var(--line)">Remarks</th>'+
+    '</tr></thead><tbody>'+lineRows+'</tbody></table>'+
+    (_mnMqty?'<div style="margin-top:10px;font-size:13px"><b>Total qty:</b> '+esc(_mnMqty)+'</div>':'')+
+    (_mnRem?'<div style="font-size:13px;color:var(--muted)"><b>Remarks:</b> '+esc(_mnRem)+'</div>':'');
+  $('review-msg').textContent='';
+  open_('m-review');
+}
+async function confirmManual(){
+  if(!_mnParty||!_mnLines){shut('m-review');return}
+  $('review-save-btn').disabled=true;
+  const r=await api('POST','/api/orders/manual',{party:_mnParty,lines:_mnLines,masterQty:_mnMqty,remarks:_mnRem});
+  $('review-save-btn').disabled=false;
+  if(r.error){const m=$('review-msg');m.style.color='var(--cancel)';m.textContent=r.error;return}
+  shut('m-review');
+  msg('mn-msg','ok','Order '+r.orderNo+' saved. Tap Print to get the docket.',8000);
+  // Show a Print docket button inline in the message area
+  const printBtn=document.createElement('button');
+  printBtn.className='b b-gold b-sm';printBtn.style.marginLeft='12px';
+  printBtn.textContent='Print docket';
+  printBtn.onclick=async()=>{
+    const full=await api('GET','/api/orders/'+encodeURIComponent(r.orderNo));
+    if(full.order)printOrderDocket(full.order,full.lines||[]);
+  };
+  const msgEl=$('mn-msg');if(msgEl)msgEl.appendChild(printBtn);
   loadPartiesQuiet();
   resetManual();
+  _mnParty=null;_mnLines=null;
 }
 function resetManual(){
   ['mn-party','mn-mobile','mn-gst','mn-addr','mn-contact','mn-transport','mn-agent','mn-agentaddr','mn-mqty','mn-mrem'].forEach(id=>{if($(id))$(id).value=''});
@@ -900,6 +951,8 @@ function onGenDesign(){
   drawGenPreview();
 }
 function drawGenPreview(){
+  // Changing the design/rate means the last batch is stale
+  lastBatch=null;const pb=$('gen-print-btn');if(pb)pb.style.display='none';
   const d=v('gen-design')||'Design name',r=money(v('gen-rate'));
   $('gp-co').textContent=settings.company_name||'Sushant Prints';
   $('gp-d').textContent=d;$('gp-r').textContent=rupee(r);
@@ -916,9 +969,15 @@ async function generate(){
   if(!r.ok){msg('gen-msg','err',r.error||'Could not generate.',6000);return}
   msg('gen-msg','ok',r.qty+' labels made for '+design+' at '+rupee(r.rate)+'. Batch '+r.batchId+'.',7000);
   await loadDesigns();loadBatches();stats();
+  // Store last batch so the Print button can use it
+  lastBatch=r;
+  const pb=$('gen-print-btn');if(pb){pb.style.display='';pb.textContent='Print labels ('+r.qty+')'}
+}
+function printLastBatch(){
+  if(!lastBatch||!lastBatch.items){msg('gen-msg','err','Generate a batch first.',4000);return}
   const pqty=parseInt(v('gen-print-qty'));
-  const toPrint=(pqty&&pqty>=1)?r.items.slice(0,pqty):r.items;
-  printLabels(toPrint,v('gen-size'),r.design,r.rate);
+  const toPrint=(pqty&&pqty>=1)?lastBatch.items.slice(0,pqty):lastBatch.items;
+  printLabels(toPrint,v('gen-size'),lastBatch.design,lastBatch.rate);
 }
 async function loadBatches(){
   const r=await api('GET','/api/batches');batches=r.batches||[];
@@ -980,7 +1039,7 @@ async function typeScan(){
 function handleScan(r,statusEl){
   const s=$(statusEl);
   if(r.status==='ok'){
-    if(inCart(r.item.item_code)){s.style.color='var(--sold)';s.textContent='Already in the cart: '+r.item.item_code;return false}
+    if(inCart(r.item.item_code)){s.style.color='var(--sold)';s.textContent='Already scanned: '+r.item.item_code;return false}
     addToCart(r.item);
     s.style.color='var(--stock)';s.innerHTML='Added '+esc(r.item.design)+' · '+rupee(r.item.rate);
     return true;
