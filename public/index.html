@@ -477,6 +477,10 @@ th:last-child,td:last-child{padding-right:4px}
                 <option value="1">Large, 4 a sheet</option>
               </select>
             </div>
+            <div class="f" style="margin:0;min-width:130px">
+              <input type="number" id="gen-print-qty" inputmode="numeric" min="1" placeholder="All" title="How many labels to print (leave blank for all)" style="height:56px;text-align:center" oninput="drawGenPreview()">
+              <label style="font-size:11px;color:var(--muted);display:block;text-align:center;margin-top:3px">labels to print</label>
+            </div>
           </div>
         </div></div>
 
@@ -488,8 +492,16 @@ th:last-child,td:last-child{padding-right:4px}
 
       <!-- ─── ORDER FORM (manual, typed) ─── -->
       <section class="page" id="p-manual">
-        <div class="phead"><h1 class="ptitle">Order form</h1><div class="psub">Type an order by hand when scanning is not possible. Prints a docket. Does not touch stock.</div></div>
+        <div class="phead"><h1 class="ptitle">Order form</h1><div class="psub">Scan a QR to fill design lines automatically, or type by hand. Prints a docket. Does not touch stock.</div></div>
         <div id="mn-msg"></div>
+
+        <div class="card"><div class="card-b" style="display:flex;align-items:center;gap:10px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:20px;flex-shrink:0;color:var(--muted)"><path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" stroke-linecap="round"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+          <input type="text" id="mn-scan-in" placeholder="Scan a QR code or type item code here, then press Enter" autocomplete="off" style="flex:1"
+            onkeydown="if(event.key==='Enter'){mnScan();event.preventDefault()}">
+          <button class="b b-out" onclick="mnScan()">Fill line</button>
+          <div id="mn-scan-msg" style="font-size:12.5px;color:var(--muted);min-width:140px"></div>
+        </div></div>
         <div class="card"><div class="card-b">
           <div class="card-h"><div><div class="card-t">Party</div><div class="card-d">Who the order is for</div></div></div>
           <div class="f"><label for="mn-party">Party name <span class="req">*</span></label>
@@ -795,6 +807,31 @@ async function startManual(){
   if(!agents.length){const r=await api('GET','/api/agents');agents=r.agents||[]}
   const ad=$('dl-mn-agent');if(ad)ad.innerHTML=agents.map(a=>'<option value="'+esc(a.name)+'">').join('');
   if(!$('mn-rows').children.length){mnAddRow();mnAddRow();mnAddRow()}
+  $('mn-scan-in')&&$('mn-scan-in').focus();
+}
+async function mnScan(){
+  const code=v('mn-scan-in').trim();
+  if(!code)return;
+  const sm=$('mn-scan-msg');sm.textContent='Looking up…';sm.style.color='var(--muted)';
+  const r=await api('POST','/api/scan',{code});
+  $('mn-scan-in').value='';
+  if(r.item){
+    const it=r.item;
+    // find the first blank design row and fill it; if all full, add a new one
+    const rows=[...$('mn-rows').querySelectorAll('tr')];
+    let target=rows.find(tr=>!tr.querySelector('.mn-d').value.trim());
+    if(!target){mnAddRow();target=$('mn-rows').querySelector('tr:last-child')}
+    target.querySelector('.mn-d').value=it.design;
+    target.querySelector('.mn-r').value=money(it.rate)||'';
+    sm.textContent='Filled: '+it.design+' @ '+rupee(it.rate);sm.style.color='var(--ok)';
+    setTimeout(()=>{sm.textContent=''},3000);
+    // offer to focus party if it's blank
+    if(!v('mn-party'))$('mn-party').focus();
+    return;
+  }
+  if(r.status==='order'){sm.textContent='That QR is a bill, not an item.';sm.style.color='var(--cancel)'}
+  else{sm.textContent=r.message||r.error||'Not found.';sm.style.color='var(--cancel)'}
+  setTimeout(()=>{sm.textContent=''},4000);
 }
 function mnRowHtml(){
   return '<tr>'+
@@ -879,7 +916,9 @@ async function generate(){
   if(!r.ok){msg('gen-msg','err',r.error||'Could not generate.',6000);return}
   msg('gen-msg','ok',r.qty+' labels made for '+design+' at '+rupee(r.rate)+'. Batch '+r.batchId+'.',7000);
   await loadDesigns();loadBatches();stats();
-  printLabels(r.items,v('gen-size'),r.design,r.rate);
+  const pqty=parseInt(v('gen-print-qty'));
+  const toPrint=(pqty&&pqty>=1)?r.items.slice(0,pqty):r.items;
+  printLabels(toPrint,v('gen-size'),r.design,r.rate);
 }
 async function loadBatches(){
   const r=await api('GET','/api/batches');batches=r.batches||[];
@@ -893,7 +932,9 @@ async function loadBatches(){
 async function reprint(bid){
   const r=await api('GET','/api/batches/'+encodeURIComponent(bid)+'/items');
   if(!r.items||!r.items.length){alert('No items in that batch.');return}
-  printLabels(r.items,v('gen-size'),r.items[0].design,r.items[0].rate);
+  const pqty=parseInt(v('gen-print-qty'));
+  const toPrint=(pqty&&pqty>=1)?r.items.slice(0,pqty):r.items;
+  printLabels(toPrint,v('gen-size'),r.items[0].design,r.items[0].rate);
 }
 
 /* ═══════════ COUNTER: SCAN + CART ═══════════ */

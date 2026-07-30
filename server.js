@@ -166,6 +166,9 @@ async function initDB() {
   await run(`ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS qty        TEXT DEFAULT ''`);
   await run(`ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS remarks    TEXT DEFAULT ''`);
   await run(`ALTER TABLE order_lines ALTER COLUMN item_code SET DEFAULT ''`);
+  // designs gained default_rate and sort_order when the v3 QR-label model was added.
+  await run(`ALTER TABLE designs ADD COLUMN IF NOT EXISTS default_rate NUMERIC(12,2) DEFAULT 0`);
+  await run(`ALTER TABLE designs ADD COLUMN IF NOT EXISTS sort_order   INTEGER DEFAULT 9999`);
 
   const defaults = {
     company_name:    'Sushant Prints Pvt Ltd',
