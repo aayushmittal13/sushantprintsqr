@@ -303,13 +303,15 @@ app.post('/api/scan', auth, wrap(async (req, res) => {
   }
   code = code.replace(/^\/+|\/+$/, '');
 
-  // Explicit design path marker
-  if (code.startsWith('d:')) {
-    const name = code.slice(2).trim();
-    const d = await get(`SELECT * FROM designs WHERE LOWER(name)=LOWER($1)`, [name]);
+  // Explicit design path markers: 'd:name' or '/d/name'
+  let designName = null;
+  if (code.startsWith('d:'))  designName = code.slice(2).trim();
+  if (code.startsWith('/d/')) designName = decodeURIComponent(code.slice(3)).trim();
+  if (designName !== null) {
+    const d = await get(`SELECT * FROM designs WHERE LOWER(name)=LOWER($1)`, [designName]);
     if (d) return res.json({ status: 'design', design: d });
-    // not in master yet — return the name anyway so the counter can use it
-    return res.json({ status: 'design', design: { name, default_rate: 0 } });
+    // Not in master yet — return the name anyway so the counter can add it
+    return res.json({ status: 'design', design: { name: designName, default_rate: 0 } });
   }
 
   // Order number pattern — opens an existing order

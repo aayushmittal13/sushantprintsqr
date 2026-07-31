@@ -988,7 +988,7 @@ function drawGenPreview(){
   const gd=$('gp-d');if(gd)gd.textContent=d;
   const gr=$('gp-r');if(gr)gr.textContent=rupee(r);
   // QR encodes 'd:<design name>' so scanning at the counter triggers the qty prompt
-  try{new QRious({element:$('gen-qr'),value:'d:'+d,size:74,background:'#ffffff',foreground:'#141019',level:'H'})}catch(e){}
+  try{new QRious({element:$('gen-qr'),value:location.origin+'/d/'+encodeURIComponent(d),size:74,background:'#ffffff',foreground:'#141019',level:'H'})}catch(e){}
 }
 async function printDesignLabel(){
   const design=v('gen-design');
@@ -998,7 +998,8 @@ async function printDesignLabel(){
   // Save the rate to the design master
   if(rate>0) await api('POST','/api/designs/rate',{name:design,rate});
   // Build an array of N identical label items (same design, same QR)
-  const labels=Array.from({length:copies},()=>({item_code:'d:'+design,design,rate}));
+  // Use /d/<name> URL so the QR decodes cleanly without encoded colons
+  const labels=Array.from({length:copies},()=>({item_code:'/d/'+encodeURIComponent(design),design,rate}));
   printLabels(labels,v('gen-size'),design,rate);
   msg('gen-msg','ok','Printing '+copies+' label'+(copies>1?'s':'')+' for '+design+'.',5000);
   await loadDesigns();loadGenDesignList();
@@ -1162,7 +1163,10 @@ async function openCam(){
   $('cam').classList.add('on');$('cam-r').textContent='';$('cam-count').textContent=cart.length;
   $('cam-t').style.color='#fff';$('cam-t').textContent='Starting the camera';
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
+    // Reuse the existing stream so the browser doesn't prompt for permission every time.
+    if(!stream||stream.getTracks().every(t=>t.readyState==='ended')){
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
+    }
     const vd=$('cam-video');vd.srcObject=stream;await vd.play();
     cv=document.createElement('canvas');cx=cv.getContext('2d',{willReadFrequently:true});
     $('cam-t').textContent='Point at each piece one by one';
@@ -1205,7 +1209,8 @@ async function camHit(raw){
 }
 function closeCam(){
   if(tick){clearInterval(tick);tick=null}
-  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+  // Keep the stream alive so the browser doesn't ask for permission again.
+  // Just stop the video element and hide the overlay.
   const vd=$('cam-video');if(vd)vd.srcObject=null;lastCode='';
   $('cam').classList.remove('on');
   if(cart.length)go('counter');
@@ -1424,12 +1429,19 @@ function printLabels(items,size,design,rate){
   let cells='';
   items.forEach(it=>{
     const c=document.createElement('canvas');
-    new QRious({element:c,value:url(it.item_code),size:S.qr,background:'#ffffff',foreground:'#000000',level:'H'});
+    // For design labels (item_code starts with /d/) use a clean /d/<name> URL.
+    // For legacy item codes use the /o/<code> URL.
+    const qrVal=it.item_code.startsWith('/d/')
+      ? location.origin+it.item_code
+      : url(it.item_code);
+    new QRious({element:c,value:qrVal,size:S.qr,background:'#ffffff',foreground:'#000000',level:'H'});
+    // Show design name on the label, not the raw item_code path
+    const labelCode=it.item_code.startsWith('/d/')?it.design:it.item_code;
     cells+='<div class="lb"><div class="lb-l">'+
       '<div class="lb-co">'+esc(co)+'</div>'+
       '<div class="lb-d">'+esc(it.design)+'</div>'+
       '<div class="lb-r">'+rupee(it.rate)+'</div>'+
-      '<div class="lb-c">'+esc(it.item_code)+'</div></div>'+
+      '<div class="lb-c">'+esc(labelCode)+'</div></div>'+
       '<div class="lb-q"><img src="'+c.toDataURL('image/png')+'"></div></div>';
   });
   const w=window.open('','_blank','width=900,height=1000');
