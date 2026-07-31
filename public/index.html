@@ -640,6 +640,23 @@ th:last-child,td:last-child{padding-right:4px}
         </div></div>
         <div class="card"><div class="card-b"><div class="card-h"><div class="card-t">Password</div></div>
           <div class="hint">To change the sign-in password, edit APP_PASSWORD in your hosting dashboard and redeploy.</div></div></div>
+
+        <div class="card" style="border-color:var(--cancel)"><div class="card-b">
+          <div class="card-h"><div>
+            <div class="card-t" style="color:var(--cancel)">Reset data</div>
+            <div class="card-d">Clears every order form. Use this once to wipe test data before you start real work. This cannot be undone.</div>
+          </div></div>
+          <div class="f"><label for="rs-pin">Admin PIN</label>
+            <input type="password" id="rs-pin" inputmode="numeric" autocomplete="off"></div>
+          <div class="f"><label for="rs-confirm">Type <b>DELETE ALL</b> to confirm</label>
+            <input type="text" id="rs-confirm" autocomplete="off" placeholder="DELETE ALL"></div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;margin:10px 0 14px;cursor:pointer">
+            <input type="checkbox" id="rs-masters" style="width:16px;height:16px">
+            Also clear the design, party and agent lists
+          </label>
+          <div class="bar"><button class="b b-dan" onclick="resetData()">Reset data</button>
+            <span id="rs-msg" style="align-self:center;font-size:12.5px;font-weight:500"></span></div>
+        </div></div>
       </section>
 
     </div>
@@ -1507,6 +1524,22 @@ async function saveSettings(){
     company_gst:v('s-gst'),company_phone:v('s-phone'),company_mobile:v('s-mob')};
   for(const[k,val]of Object.entries(map))await api('POST','/api/settings',{key:k,value:val});
   await loadSettings();const m=$('s-msg');m.style.color='var(--stock)';m.textContent='Saved.';setTimeout(()=>m.textContent='',4000)}
+async function resetData(){
+  const m=$('rs-msg');
+  const pin=v('rs-pin'),confirm_=v('rs-confirm'),alsoMasters=$('rs-masters').checked;
+  if(!pin){m.style.color='var(--cancel)';m.textContent='Enter the admin PIN.';return}
+  if(confirm_!=='DELETE ALL'){m.style.color='var(--cancel)';m.textContent='Type DELETE ALL exactly.';return}
+  if(!confirm('This deletes every order form permanently. Continue?'))return;
+  m.style.color='var(--muted)';m.textContent='Resetting…';
+  const r=await api('POST','/api/reset',{pin,confirm:confirm_,alsoMasters});
+  if(r.error){m.style.color='var(--cancel)';m.textContent=r.error;return}
+  $('rs-pin').value='';$('rs-confirm').value='';$('rs-masters').checked=false;
+  m.style.color='var(--stock)';
+  m.textContent='Done. All order forms cleared'+(r.mastersCleared?', lists cleared too':'')+'. Numbering restarts at 0001.';
+  cart=[];drawCart();
+  await loadDesigns();await loadPartiesQuiet();stats();
+}
+
 async function runBackup(){const m=$('bk-msg');m.style.color='var(--muted)';m.textContent='Running';
   const r=await api('POST','/api/backup/trigger');m.style.color=r.ok?'var(--stock)':'var(--cancel)';
   m.textContent=r.ok?(r.message||'Done.'):(r.error||'Failed.')}

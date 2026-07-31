@@ -51,9 +51,22 @@ async function nextOrderNo(getFn) {
   const yy = String(d.getFullYear()).slice(-2);
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const prefix = `SP-${yy}${mm}`;
+
+  // Look at what already exists for this month. Orders may have been created
+  // before this counter existed (or by an older version), so starting blindly
+  // at 1 would regenerate a number that is already taken.
+  const maxRow = await getFn(
+    `SELECT COALESCE(MAX(CAST(SUBSTRING(order_no FROM '[0-9]+$') AS INTEGER)), 0) AS m
+       FROM orders WHERE order_no LIKE $1`, [prefix + '-%']);
+  const floor = (parseInt(maxRow && maxRow.m) || 0) + 1;
+
+  // Take whichever is higher: the counter's next value, or one past the highest
+  // order that actually exists. Self-healing if the two ever drift apart.
   const r = await getFn(
-    `INSERT INTO counters(key,val) VALUES($1,1) ON CONFLICT(key) DO UPDATE SET val=counters.val+1 RETURNING val`,
-    [prefix]);
+    `INSERT INTO counters(key,val) VALUES($1,$2)
+     ON CONFLICT(key) DO UPDATE SET val = GREATEST(counters.val + 1, $2)
+     RETURNING val`,
+    [prefix, floor]);
   return `${prefix}-${String(r.val).padStart(4, '0')}`;
 }
 
@@ -573,6 +586,24 @@ app.post('/api/verify-pin', auth, (req, res) => {
   if (req.body.pin === CHANGE_PIN) return res.json({ ok: true });
   res.status(401).json({ ok: false, error: 'Wrong PIN' });
 });
+
+// POST /api/reset — wipe test data. Requires the admin PIN and a typed phrase.
+// { pin, confirm:'DELETE ALL', alsoMasters:bool }
+app.post('/api/reset', auth, wrap(async (req, res) => {
+  if (req.body.pin !== ADMIN_PIN)      return res.status(401).json({ error: 'Wrong admin PIN' });
+  if (req.body.confirm !== 'DELETE ALL') return res.status(400).json({ error: 'Type DELETE ALL exactly to confirm' });
+  const { run, get } = req.app.locals;
+
+  await run(`TRUNCATE order_lines, status_log, orders RESTART IDENTITY`);
+  await run(`DELETE FROM counters`);            // order numbers restart at 0001
+  let mastersCleared = false;
+  if (req.body.alsoMasters) {
+    await run(`TRUNCATE designs, parties, agents RESTART IDENTITY`);
+    mastersCleared = true;
+  }
+  const left = await get(`SELECT COUNT(*) AS c FROM orders`);
+  res.json({ ok: true, ordersLeft: parseInt(left.c) || 0, mastersCleared });
+}));
 
 /* ─────────────────── BACKUP ─────────────────── */
 
