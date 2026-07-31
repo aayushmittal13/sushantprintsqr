@@ -379,17 +379,16 @@ th:last-child,td:last-child{padding-right:4px}
 
     <div class="nav-group">Counter</div>
     <button class="nav-item on" data-p="generate" onclick="go('generate')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><path d="M14 14h2v2M18 18h2M14 18v2M18 14v0" stroke-linecap="round"/></svg>Generate QR</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><path d="M14 14h2v2M18 18h2M14 18v2M18 14v0" stroke-linecap="round"/></svg>Print label</button>
     <button class="nav-item" data-p="counter" onclick="go('counter')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" stroke-linecap="round"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Scan</button>
     <button class="nav-item" data-p="manual" onclick="go('manual')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z" stroke-linejoin="round"/></svg>Order form</button>
 
     <div class="nav-group">Manage</div>
-    <button class="nav-item" data-p="stock" onclick="go('stock')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z" stroke-linejoin="round"/><path d="M3 7l9 4 9-4M12 11v10" stroke-linejoin="round"/></svg>Stock</button>
+
     <button class="nav-item" data-p="orders" onclick="go('orders')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4" stroke-linecap="round"/></svg>Bills</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4" stroke-linecap="round"/></svg>Orders</button>
     <button class="nav-item" data-p="designs" onclick="go('designs')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h10" stroke-linecap="round"/></svg>Designs &amp; parties</button>
     <button class="nav-item" data-p="report" onclick="go('report')">
@@ -410,84 +409,94 @@ th:last-child,td:last-child{padding-right:4px}
   <main class="main">
     <div class="wrap">
 
-      <!-- ─── COUNTER ─── -->
+      <!-- ─── SCAN / ORDER BUILDER ─── -->
       <section class="page" id="p-counter">
-        <div class="phead"><h1 class="ptitle">Counter</h1><div class="psub">Scan pieces, then bill them together</div></div>
+        <div class="phead"><h1 class="ptitle">Order form</h1><div class="psub">Scan a design QR to add lines, or type a design name. Fill party details and save.</div></div>
         <div id="counter-msg"></div>
-        <div class="counter">
-          <div class="scanface">
-            <button class="scan-btn" onclick="openCam()">
-              <span class="scan-ring"><svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" stroke-linecap="round"/><path d="M4 12h16" stroke-linecap="round"/></svg></span>
-              <span class="scan-btn-t">Scan a piece</span>
-              <span class="scan-btn-s">Camera keeps scanning until you're done</span>
-            </button>
-            <div class="scan-type">
-              <input type="text" id="scan-in" placeholder="Or type a code" autocomplete="off" onkeydown="if(event.key==='Enter')typeScan()">
-              <button class="b b-out" onclick="typeScan()">Add</button>
-            </div>
-            <div class="scan-status" id="scan-status"></div>
-          </div>
 
-          <div class="cart">
-            <div class="cart-h"><span class="cart-h-t">Scanned pieces</span><span class="cart-count" id="cart-count">0 pieces</span></div>
-            <div class="cart-list" id="cart-list"></div>
-            <div class="cart-foot" id="cart-foot" style="display:none">
-              <div class="cart-tot"><span class="cart-tot-l">Pieces</span><span class="cart-tot-v" id="cart-pieces">0</span></div>
-              <div class="cart-tot"><span class="cart-tot-l">Total</span><span class="cart-tot-v" id="cart-total">₹0</span></div>
-              <div class="cart-tot"><span class="cart-tot-l">Discount</span>
-                <input type="text" id="cart-disc" inputmode="numeric" value="" placeholder="0" style="width:96px;height:34px;text-align:right;font-family:var(--mono)" oninput="drawCart()"></div>
-              <div class="cart-net"><span class="cart-net-l">To pay</span><span class="cart-net-v" id="cart-net">₹0</span></div>
-              <div class="cart-actions">
-                <button class="b b-gold b-big b-full" onclick="openCheckout()">Confirm order</button>
-                <button class="b b-out b-full b-sm" onclick="clearCart()">Clear all</button>
-              </div>
+        <!-- Scan bar -->
+        <div class="card"><div class="card-b" style="display:flex;align-items:center;gap:10px">
+          <button class="b b-out" onclick="openCam()" title="Open camera scanner" style="flex-shrink:0;height:48px;padding:0 16px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:20px;vertical-align:middle"><path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" stroke-linecap="round"/><path d="M4 12h16" stroke-linecap="round"/></svg>
+          </button>
+          <input type="text" id="scan-in" placeholder="Scan QR or type design name, then press Enter" autocomplete="off" style="flex:1"
+            list="dl-design" onkeydown="if(event.key==='Enter'){typeScan();event.preventDefault()}"><datalist id="dl-design"></datalist>
+          <button class="b b-ink" onclick="typeScan()" style="flex-shrink:0;height:48px;padding:0 18px">Add line</button>
+        </div></div>
+
+        <!-- Lines table -->
+        <div class="card"><div class="card-b">
+          <div class="cart-h">
+            <span class="cart-h-t">Design lines</span>
+            <span class="cart-count" id="cart-count" style="font-size:13px;color:var(--muted)">0 lines</span>
+          </div>
+          <div id="cart-list"></div>
+          <div id="cart-foot" style="display:none;padding:16px 0 4px">
+            <div class="cart-actions" style="margin-top:8px">
+              <button class="b b-ink b-big b-full" onclick="openCheckout()">Review &amp; save order form</button>
+              <button class="b b-out b-full b-sm" onclick="clearCart()">Clear all lines</button>
             </div>
           </div>
-        </div>
+        </div></div>
+
+        <!-- Party details (always visible so staff can fill while scanning) -->
+        <div class="card"><div class="card-b">
+          <div class="card-h"><div><div class="card-t">Party details</div><div class="card-d">Fill these in before saving</div></div></div>
+          <div class="f"><label for="co-party">Party name <span class="req">*</span></label>
+            <input type="text" id="co-party" list="dl-party" autocomplete="off" placeholder="Shop or buyer name" oninput="onCoParty()">
+            <datalist id="dl-party"></datalist></div>
+          <div class="g2">
+            <div class="f"><label for="co-mobile">Mobile <span class="req">*</span></label><input type="tel" id="co-mobile" inputmode="numeric"></div>
+            <div class="f"><label for="co-gst">GST no</label><input type="text" id="co-gst" style="text-transform:uppercase"></div>
+          </div>
+          <div class="g2">
+            <div class="f"><label for="co-transport">Transport</label><input type="text" id="co-transport"></div>
+            <div class="f"><label for="co-remarks">Remarks</label><input type="text" id="co-remarks"></div>
+          </div>
+        </div></div>
       </section>
 
-      <!-- ─── GENERATE QR ─── -->
+      <!-- ─── PRINT DESIGN LABEL ─── -->
       <section class="page" id="p-generate">
-        <div class="phead"><h1 class="ptitle">Generate QR</h1><div class="psub">Make labels for a batch of pieces, then print and stick them on</div></div>
+        <div class="phead"><h1 class="ptitle">Print design label</h1><div class="psub">One QR label per design. Stick it on the sample piece in your showroom.</div></div>
         <div id="gen-msg"></div>
         <div class="card"><div class="card-b">
-          <div class="g3">
+          <div class="g2">
             <div class="f"><label for="gen-design">Design <span class="req">*</span></label>
-              <input type="text" id="gen-design" list="dl-design" autocomplete="off" placeholder="Pick or type a design" oninput="onGenDesign()"><datalist id="dl-design"></datalist></div>
-            <div class="f"><label for="gen-rate">Rate (₹) <span class="req">*</span></label>
-              <input type="text" id="gen-rate" inputmode="numeric" placeholder="850" oninput="drawGenPreview()"></div>
-            <div class="f"><label for="gen-qty">How many pieces <span class="req">*</span></label>
-              <input type="number" id="gen-qty" inputmode="numeric" min="1" max="500" placeholder="20" value="20" oninput="drawGenPreview()"></div>
+              <input type="text" id="gen-design" list="dl-design-plain" autocomplete="off" placeholder="Pick or type a design name" oninput="onGenDesign()"></div>
+            <div class="f"><label for="gen-rate">Rate (₹)</label>
+              <input type="text" id="gen-rate" inputmode="numeric" placeholder="e.g. 850" oninput="drawGenPreview()"></div>
           </div>
-          <div class="gen-preview" id="gen-preview">
+          <!-- Label preview -->
+          <div class="gen-preview" id="gen-preview" style="margin:16px 0">
             <canvas id="gen-qr"></canvas>
             <div class="gen-preview-m">
               <div class="gen-preview-co" id="gp-co">Sushant Prints</div>
               <div class="gen-preview-d" id="gp-d">Design name</div>
               <div class="gen-preview-r" id="gp-r">₹0</div>
-              <div class="gen-preview-c">This is how each label will look</div>
+              <div class="gen-preview-c" style="font-size:10px;color:#888">Scan to add to order</div>
             </div>
           </div>
-          <div class="bar" style="margin-top:16px">
-            <button class="b b-ink b-big" id="gen-btn" onclick="generate()">Generate labels</button>
-            <button class="b b-out b-big" id="gen-print-btn" style="display:none" onclick="printLastBatch()">Print labels</button>
-            <div class="f" style="margin:0;min-width:150px">
+          <div class="bar" style="margin-top:4px;gap:10px">
+            <button class="b b-ink b-big" id="gen-btn" onclick="printDesignLabel()">Print label</button>
+            <div class="f" style="margin:0;min-width:160px">
               <select id="gen-size" style="height:56px">
-                <option value="3">Small, 18 a sheet</option>
-                <option value="2" selected>Medium, 10 a sheet</option>
-                <option value="1">Large, 4 a sheet</option>
+                <option value="3">Small (9 per A4)</option>
+                <option value="2" selected>Medium (6 per A4)</option>
+                <option value="1">Large (2 per A4)</option>
               </select>
             </div>
-            <div class="f" style="margin:0;min-width:130px">
-              <input type="number" id="gen-print-qty" inputmode="numeric" min="1" placeholder="All" title="How many labels to print (leave blank for all)" style="height:56px;text-align:center" oninput="drawGenPreview()">
-              <label style="font-size:11px;color:var(--muted);display:block;text-align:center;margin-top:3px">labels to print</label>
+            <div class="f" style="margin:0;min-width:120px">
+              <input type="number" id="gen-copies" inputmode="numeric" min="1" max="50" placeholder="1" value="1" style="height:56px;text-align:center">
+              <label style="font-size:11px;color:var(--muted);display:block;text-align:center;margin-top:3px">copies</label>
             </div>
           </div>
         </div></div>
 
+        <!-- Design list for quick reprinting -->
         <div class="card"><div class="card-b">
-          <div class="card-h"><div><div class="card-t">Recent batches</div><div class="card-d">Reprint a sheet any time</div></div></div>
-          <div class="tw" id="batch-list"></div>
+          <div class="card-h"><div><div class="card-t">All designs</div><div class="card-d">Click any design to print its label again</div></div></div>
+          <div id="gen-design-list"></div>
         </div></div>
       </section>
 
@@ -560,12 +569,12 @@ th:last-child,td:last-child{padding-right:4px}
 
       <!-- ─── BILLS ─── -->
       <section class="page" id="p-orders">
-        <div class="phead"><h1 class="ptitle">Bills</h1><div class="psub" id="orders-sub">Every order billed</div></div>
+        <div class="phead"><h1 class="ptitle">Order forms</h1><div class="psub" id="orders-sub">All order forms</div></div>
         <div class="card"><div class="card-b">
           <div class="g3">
             <div class="f"><label for="q-search">Search</label><input type="text" id="q-search" placeholder="Bill no, party, mobile, code" oninput="debOrders()"></div>
             <div class="f"><label for="q-status">Status</label><select id="q-status" onchange="loadOrders()">
-              <option value="">All</option><option>Billed</option><option>Cancelled</option></select></div>
+              <option value="">All</option><option>Booked</option><option>Cancelled</option></select></div>
             <div class="f"><label for="q-limit">Show</label><select id="q-limit" onchange="loadOrders()">
               <option value="50">Latest 50</option><option value="200">Latest 200</option><option value="2000">Everything</option></select></div>
           </div>
@@ -582,7 +591,7 @@ th:last-child,td:last-child{padding-right:4px}
 
       <!-- ─── DESIGNS & PARTIES ─── -->
       <section class="page" id="p-designs">
-        <div class="phead"><h1 class="ptitle">Designs &amp; parties</h1><div class="psub">The lists behind your labels and bills</div></div>
+        <div class="phead"><h1 class="ptitle">Designs &amp; parties</h1><div class="psub">Manage your design master list, parties, and agents</div></div>
         <div class="card"><div class="card-b">
           <div class="card-h"><div><div class="card-t">Designs</div><div class="card-d">Each can carry a default rate</div></div></div>
           <div class="g3" style="margin-bottom:14px">
@@ -598,7 +607,7 @@ th:last-child,td:last-child{padding-right:4px}
 
       <!-- ─── REPORTS ─── -->
       <section class="page" id="p-report">
-        <div class="phead"><h1 class="ptitle">Reports</h1><div class="psub">Sales and stock over a date range</div></div>
+        <div class="phead"><h1 class="ptitle">Reports</h1><div class="psub">Orders and sets by design and party over a date range</div></div>
         <div class="card"><div class="card-b"><div class="g3">
           <div class="f"><label for="r-from">From</label><input type="date" id="r-from"></div>
           <div class="f"><label for="r-to">To</label><input type="date" id="r-to"></div>
@@ -609,7 +618,7 @@ th:last-child,td:last-child{padding-right:4px}
 
       <!-- ─── SETTINGS ─── -->
       <section class="page" id="p-settings">
-        <div class="phead"><h1 class="ptitle">Settings</h1><div class="psub">What prints on your labels and bills</div></div>
+        <div class="phead"><h1 class="ptitle">Settings</h1><div class="psub">What prints on your labels and order forms</div></div>
         <div class="card"><div class="card-b">
           <div class="card-h"><div class="card-t">Letterhead</div></div>
           <div class="f"><label for="s-name">Company name</label><input type="text" id="s-name"></div>
@@ -654,8 +663,7 @@ th:last-child,td:last-child{padding-right:4px}
   <div class="sheet-menu-panel">
     <div class="sheet-menu-h">Menu</div>
     <div class="nav-group">Manage</div>
-    <button class="nav-item" onclick="go('stock');closeMenu()">Stock</button>
-    <button class="nav-item" onclick="go('orders');closeMenu()">Bills</button>
+    <button class="nav-item" onclick="go('orders');closeMenu()">Orders</button>
     <button class="nav-item" onclick="go('designs');closeMenu()">Designs &amp; parties</button>
     <button class="nav-item" onclick="go('report');closeMenu()">Reports</button>
     <button class="nav-item" onclick="go('settings');closeMenu()">Settings</button>
@@ -665,7 +673,7 @@ th:last-child,td:last-child{padding-right:4px}
 
 <!-- ═══════════ MODALS ═══════════ -->
 <div class="modal" id="m-checkout"><div class="mbox">
-  <div class="mtitle">Confirm order</div>
+  <div class="mtitle">Save order form</div>
   <div class="mdesc" id="co-desc">Customer details are optional. Fill them in only for a proper bill.</div>
   <div class="f"><label for="co-party">Party name</label>
     <input type="text" id="co-party" list="dl-party" autocomplete="off" placeholder="Leave blank for a quick bill" oninput="onCoParty()"><datalist id="dl-party"></datalist></div>
@@ -676,18 +684,18 @@ th:last-child,td:last-child{padding-right:4px}
   <div class="f"><label for="co-transport">Transport</label><input type="text" id="co-transport"></div>
   <div class="f"><label for="co-remarks">Remarks</label><input type="text" id="co-remarks"></div>
   <div class="bar" style="margin-top:4px">
-    <button class="b b-gold" id="co-btn" onclick="checkout()">Save &amp; go to order</button>
+    <button class="b b-gold" id="co-btn" onclick="checkout()">Save order form</button>
     <button class="b b-out" onclick="shut('m-checkout')">Back</button>
   </div>
   <div class="mmsg" id="co-msg"></div>
 </div></div>
 
 <div class="modal" id="m-cancel"><div class="mbox">
-  <div class="mtitle" id="cn-title">Cancel this bill</div>
-  <div class="mdesc" id="cn-desc">The pieces on this bill go back into stock and can be sold again. Enter the admin PIN.</div>
+  <div class="mtitle" id="cn-title">Cancel order form</div>
+  <div class="mdesc" id="cn-desc">This cancels the order form. Enter the admin PIN.</div>
   <div class="f"><label for="cn-reason">Reason</label><input type="text" id="cn-reason" placeholder="Why is it cancelled"></div>
   <div class="f"><label for="cn-pin">Admin PIN</label><input type="password" id="cn-pin" inputmode="numeric" autocomplete="off"></div>
-  <div class="bar"><button class="b b-dan" id="cn-do" onclick="submitCancel()">Cancel bill</button>
+  <div class="bar"><button class="b b-dan" id="cn-do" onclick="submitCancel()">Cancel order form</button>
     <button class="b b-out" onclick="shut('m-cancel')">Keep it</button></div>
   <div class="mmsg" id="cn-msg"></div>
 </div></div>
@@ -702,6 +710,29 @@ th:last-child,td:last-child{padding-right:4px}
     <button class="b b-out" onclick="shut('m-review')">Edit</button>
   </div>
   <div class="mmsg" id="review-msg"></div>
+</div></div>
+
+<!-- ═══════════ QTY PROMPT ═══════════ -->
+<div class="modal" id="m-qty"><div class="mbox" style="max-width:420px">
+  <div class="mtitle" id="qp-name" style="font-size:18px">Design name</div>
+  <div class="mdesc">How many sets is the party ordering?</div>
+  <div class="g2" style="margin-top:16px">
+    <div class="f"><label for="qp-qty">Sets <span class="req">*</span></label>
+      <input type="number" id="qp-qty" inputmode="numeric" min="1" placeholder="e.g. 50"
+        style="font-size:22px;text-align:center;font-weight:700"
+        onkeydown="if(event.key==='Enter')confirmQty()"></div>
+    <div class="f"><label for="qp-rate">Rate (₹)</label>
+      <input type="text" id="qp-rate" inputmode="numeric" placeholder="auto-filled"
+        style="text-align:right" onkeydown="if(event.key==='Enter')confirmQty()"></div>
+  </div>
+  <div class="f" style="margin-top:8px"><label for="qp-remarks">Remarks</label>
+    <input type="text" id="qp-remarks" placeholder="colour, note (optional)"
+      onkeydown="if(event.key==='Enter')confirmQty()"></div>
+  <div class="bar" style="margin-top:16px">
+    <button class="b b-ink b-big" onclick="confirmQty()">Add to order</button>
+    <button class="b b-out" onclick="shut('m-qty')">Cancel</button>
+  </div>
+  <div class="mmsg" id="qp-msg"></div>
 </div></div>
 
 <div class="cam" id="cam">
@@ -731,7 +762,7 @@ function money(x){const n=parseFloat(String(x).replace(/[^0-9.\-]/g,''));return 
 function rupee(n){return '₹'+money(n).toLocaleString('en-IN',{maximumFractionDigits:0})}
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function isoPfx(i){if(!i)return'';const a=i.split('-');return a[2]+'-'+MON[+a[1]-1]+'-'+a[0]}
-function pill(s){const lbl={in_stock:'In stock',sold:'Sold',in_cart:'Scanning',cancelled:'Cancelled',Billed:'Billed',Cancelled:'Cancelled'}[s]||s;
+function pill(s){const lbl={in_stock:'In stock',sold:'Sold',in_cart:'Scanning',cancelled:'Cancelled',Booked:'Booked',Cancelled:'Cancelled'}[s]||s;
   return '<span class="pill st-'+s+'"><i></i>'+esc(lbl)+'</span>'}
 function url(code){return location.origin+'/o/'+encodeURIComponent(code)}
 function ico(n){const m={ok:'<path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -769,7 +800,7 @@ function go(p){
   const t=$('p-'+p);if(t)t.classList.add('on');
   document.querySelectorAll('.nav-item,.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
   window.scrollTo(0,0);
-  if(p==='generate'){loadBatches();drawGenPreview();lastBatch=null;const pb=$('gen-print-btn');if(pb)pb.style.display='none';}
+  if(p==='generate'){loadGenDesignList();drawGenPreview();}
   if(p==='counter')setTimeout(()=>{const s=$('scan-in');if(s)s.focus()},50);
   if(p==='manual')startManual();
   if(p==='stock')loadStock();
@@ -793,7 +824,7 @@ async function start(){
   await Promise.all([loadSettings(),loadDesigns(),loadPartiesQuiet()]);
   stats();drawCart();
   setInterval(stats,60000);
-  go('generate');   // land on Generate by default
+  go('counter');   // land on Order form by default
   // A scanned link: if it's a bill, open it; if it's an item — drop it in the scanned list.
   if(deepLink){const code=deepLink;deepLink=null;history.replaceState({},'','/');
     const r=await api('POST','/api/scan',{code});
@@ -807,7 +838,8 @@ async function start(){
 async function loadDesigns(){const d=await api('GET','/api/designs');designs=d.designs||[];fillDesignData()}
 function fillDesignData(){
   const opts=designs.map(x=>'<option value="'+esc(x.name)+'">').join('');
-  $('dl-design').innerHTML=opts;$('dl-design-plain').innerHTML=opts;
+  const dl=$('dl-design');if(dl)dl.innerHTML=opts;
+  const dlp=$('dl-design-plain');if(dlp)dlp.innerHTML=opts;
 }
 async function loadPartiesQuiet(){const p=await api('GET','/api/parties');parties=p.parties||[];
   $('dl-party').innerHTML=parties.map(x=>'<option value="'+esc(x.name)+'">').join('');
@@ -951,140 +983,171 @@ function onGenDesign(){
   drawGenPreview();
 }
 function drawGenPreview(){
-  // Changing the design/rate means the last batch is stale
-  lastBatch=null;const pb=$('gen-print-btn');if(pb)pb.style.display='none';
   const d=v('gen-design')||'Design name',r=money(v('gen-rate'));
-  $('gp-co').textContent=settings.company_name||'Sushant Prints';
-  $('gp-d').textContent=d;$('gp-r').textContent=rupee(r);
-  try{new QRious({element:$('gen-qr'),value:'SAMPLE',size:74,background:'#ffffff',foreground:'#141019',level:'H'})}catch(e){}
+  const co=$('gp-co');if(co)co.textContent=settings.company_name||'Sushant Prints';
+  const gd=$('gp-d');if(gd)gd.textContent=d;
+  const gr=$('gp-r');if(gr)gr.textContent=rupee(r);
+  // QR encodes 'd:<design name>' so scanning at the counter triggers the qty prompt
+  try{new QRious({element:$('gen-qr'),value:'d:'+d,size:74,background:'#ffffff',foreground:'#141019',level:'H'})}catch(e){}
 }
-async function generate(){
-  const design=v('gen-design'),rate=v('gen-rate'),qty=parseInt(v('gen-qty'));
-  if(!design){msg('gen-msg','err','Pick or type a design first.',5000);$('gen-design').focus();return}
-  if(!rate||money(rate)<=0){msg('gen-msg','err','Set a rate.',5000);$('gen-rate').focus();return}
-  if(!qty||qty<1){msg('gen-msg','err','How many pieces?',5000);$('gen-qty').focus();return}
-  $('gen-btn').disabled=true;
-  const r=await api('POST','/api/items/generate',{design,rate,qty});
-  $('gen-btn').disabled=false;
-  if(!r.ok){msg('gen-msg','err',r.error||'Could not generate.',6000);return}
-  msg('gen-msg','ok',r.qty+' labels made for '+design+' at '+rupee(r.rate)+'. Batch '+r.batchId+'.',7000);
-  await loadDesigns();loadBatches();stats();
-  // Store last batch so the Print button can use it
-  lastBatch=r;
-  const pb=$('gen-print-btn');if(pb){pb.style.display='';pb.textContent='Print labels ('+r.qty+')'}
+async function printDesignLabel(){
+  const design=v('gen-design');
+  if(!design){msg('gen-msg','err','Pick or type a design first.',4000);$('gen-design').focus();return}
+  const rate=money(v('gen-rate'));
+  const copies=Math.max(1,parseInt(v('gen-copies'))||1);
+  // Save the rate to the design master
+  if(rate>0) await api('POST','/api/designs/rate',{name:design,rate});
+  // Build an array of N identical label items (same design, same QR)
+  const labels=Array.from({length:copies},()=>({item_code:'d:'+design,design,rate}));
+  printLabels(labels,v('gen-size'),design,rate);
+  msg('gen-msg','ok','Printing '+copies+' label'+(copies>1?'s':'')+' for '+design+'.',5000);
+  await loadDesigns();loadGenDesignList();
 }
-function printLastBatch(){
-  if(!lastBatch||!lastBatch.items){msg('gen-msg','err','Generate a batch first.',4000);return}
-  const pqty=parseInt(v('gen-print-qty'));
-  const toPrint=(pqty&&pqty>=1)?lastBatch.items.slice(0,pqty):lastBatch.items;
-  printLabels(toPrint,v('gen-size'),lastBatch.design,lastBatch.rate);
+function pickDesignLabel(name,rate){
+  $('gen-design').value=name;
+  const re=$('gen-rate');if(re)re.value=rate>0?rate:'';
+  drawGenPreview();
+  msg('gen-msg','ok','Ready — tap "Print label" to print the label for '+name+'.',4000);
 }
-async function loadBatches(){
-  const r=await api('GET','/api/batches');batches=r.batches||[];
-  $('batch-list').innerHTML=batches.length?'<table><thead><tr><th>Batch</th><th>Design</th><th>Rate</th><th>Pieces</th><th>Made</th><th></th></tr></thead><tbody>'+
-    batches.map(b=>'<tr><td class="code">'+esc(b.batch_id)+'</td><td style="font-weight:500">'+esc(b.design)+'</td>'+
-      '<td class="rt">'+rupee(b.rate)+'</td><td class="code">'+b.qty+'</td>'+
-      '<td style="color:var(--muted);font-size:12.5px;white-space:nowrap">'+esc(String(b.created_at).split(' ')[0])+'</td>'+
-      '<td style="text-align:right"><button class="b b-out b-sm" onclick="reprint(\''+esc(b.batch_id)+'\')">Reprint</button></td></tr>').join('')+
-    '</tbody></table>':blank('No batches yet. Generate your first labels above.');
+function loadGenDesignList(){
+  const el=$('gen-design-list');if(!el)return;
+  if(!designs.length){el.innerHTML=blank('No designs yet. Add them in Designs & parties.');return}
+  el.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0">'+
+    designs.map(d=>'<button class="b b-out b-sm" onclick="pickDesignLabel(\''+esc(d.name)+'\','+money(d.default_rate)+')" style="font-size:13px">'+esc(d.name)+'</button>').join('')+'</div>';
 }
-async function reprint(bid){
-  const r=await api('GET','/api/batches/'+encodeURIComponent(bid)+'/items');
-  if(!r.items||!r.items.length){alert('No items in that batch.');return}
-  const pqty=parseInt(v('gen-print-qty'));
-  const toPrint=(pqty&&pqty>=1)?r.items.slice(0,pqty):r.items;
-  printLabels(toPrint,v('gen-size'),r.items[0].design,r.items[0].rate);
-}
+// Stubs — batches table no longer exists
+async function loadBatches(){loadGenDesignList()}
+async function reprint(){}
+function printLastBatch(){}
 
 /* ═══════════ COUNTER: SCAN + CART ═══════════ */
-function inCart(code){return cart.some(c=>c.item_code===code)}
-function addToCart(item){
-  if(inCart(item.item_code))return false;
-  cart.push({item_code:item.item_code,design:item.design,rate:money(item.rate)});
-  drawCart(true);
-  return true;
-}
-function removeFromCart(code){cart=cart.filter(c=>c.item_code!==code);drawCart()}
-function clearCart(){if(cart.length&&!confirm('Clear all scanned pieces? Nothing is saved yet.'))return;cart=[];drawCart()}
-function cartTotal(){return cart.reduce((s,c)=>s+money(c.rate),0)}
+/* ═══════════ ORDER LINE BUILDER ═══════════ */
+// cart is now a list of design lines: [{design,qty,rate,remarks}]
+// The variable name "cart" is kept so the camera code still compiles.
 
-function drawCart(flashLast){
+function lineIdx(design){return cart.findIndex(c=>c.design===design)}
+function clearCart(){if(cart.length&&!confirm('Clear all lines? Nothing is saved yet.'))return;cart=[];drawCart()}
+function removeFromCart(idx){cart.splice(idx,1);drawCart()}
+function inCart(){return false} // no longer meaningful but keeps camera code happy
+function addToCart(){return false}
+function cartTotal(){return 0}
+
+function drawCart(){
   const list=$('cart-list'),foot=$('cart-foot');
-  $('cart-count').textContent=cart.length+(cart.length===1?' piece':' pieces');
+  const cc=$('cart-count');if(cc)cc.textContent=cart.length+(cart.length===1?' line':' lines');
   if(!cart.length){
     list.innerHTML='<div class="cart-empty">'+ico('box').replace('viewBox','class="_" viewBox')+
-      '<div>Scan a piece to start a bill</div></div>';
-    foot.style.display='none';return;
+      '<div>Scan a design QR or type a name to add lines</div></div>';
+    if(foot)foot.style.display='none';return;
   }
-  list.innerHTML=cart.map((c,i)=>'<div class="cart-row'+(flashLast&&i===cart.length-1?' flash':'')+'">'+
-    '<div class="cart-row-m"><div class="cart-row-d">'+esc(c.design)+'</div><div class="cart-row-c">'+esc(c.item_code)+'</div></div>'+
-    '<div class="cart-row-r">'+rupee(c.rate)+'</div>'+
-    '<button class="cart-row-x" onclick="removeFromCart(\''+esc(c.item_code)+'\')" title="Remove">'+
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/></svg></button></div>').join('');
-  const total=cartTotal(),disc=money(v('cart-disc')),net=Math.max(0,total-disc);
-  $('cart-pieces').textContent=cart.length;
-  $('cart-total').textContent=rupee(total);
-  $('cart-net').textContent=rupee(net);
-  foot.style.display='';
-  if($('cam').classList.contains('on'))$('cam-count').textContent=cart.length;const _db=$('cam-done-btn');if(_db)_db.textContent='Done';
+  list.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+
+    '<th style="text-align:left;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Design</th>'+
+    '<th style="width:70px;text-align:center;padding:8px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Sets</th>'+
+    '<th style="width:90px;text-align:right;padding:8px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Rate</th>'+
+    '<th style="width:36px;border-bottom:1px solid var(--line)"></th></tr></thead><tbody>'+
+    cart.map((c,i)=>'<tr><td style="padding:10px 12px;font-weight:500">'+esc(c.design)+
+      (c.remarks?'<div style="font-size:12px;color:var(--muted)">'+esc(c.remarks)+'</div>':'')+
+      '</td><td style="text-align:center;font-family:var(--mono);font-size:15px;font-weight:600">'+esc(c.qty)+
+      '</td><td style="text-align:right;font-family:var(--mono);color:var(--muted)">'+
+      (money(c.rate)>0?rupee(c.rate):'')+
+      '</td><td style="text-align:center"><button class="rowx" onclick="removeFromCart('+i+')">&times;</button></td></tr>').join('')+
+    '</tbody></table>';
+  if(foot)foot.style.display='';
+  const db=$('cam-done-btn');if(db)db.textContent='Done ('+cart.length+(cart.length===1?' line':' lines')+')';
 }
 
 async function typeScan(){
   const code=v('scan-in');if(!code)return;
   $('scan-in').value='';
   const r=await api('POST','/api/scan',{code});
-  handleScan(r,'scan-status');
+  if(r.status==='design'){openQtyPrompt(r.design);$('scan-in').focus();return}
+  if(r.status==='order'){openOrder(r.orderNo);return}
+  // treat as a typed design name
+  const name=code.trim();
+  const d=designs.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  openQtyPrompt(d||{name,default_rate:0});
   $('scan-in').focus();
 }
-function handleScan(r,statusEl){
-  const s=$(statusEl);
-  if(r.status==='ok'){
-    if(inCart(r.item.item_code)){s.style.color='var(--sold)';s.textContent='Already scanned: '+r.item.item_code;return false}
-    addToCart(r.item);
-    s.style.color='var(--stock)';s.innerHTML='Added '+esc(r.item.design)+' · '+rupee(r.item.rate);
-    return true;
-  }
-  if(r.status==='sold'){s.style.color='var(--cancel)';s.textContent='Already sold: '+r.item.item_code+'. Cannot sell twice.';return false}
-  if(r.status==='cancelled'){s.style.color='var(--cancel)';s.textContent='That piece was cancelled.';return false}
-  if(r.status==='order'){s.style.color='var(--muted)';s.textContent='That is a bill QR, not a piece. Opening it.';openOrder(r.orderNo);return false}
-  s.style.color='var(--cancel)';s.textContent='No piece found for that code.';return false;
+async function handleScan(r){
+  if(r.status==='design')openQtyPrompt(r.design);
+  else if(r.status==='order'){closeCam();openOrder(r.orderNo)}
 }
 
-/* ═══════════ CHECKOUT ═══════════ */
+/* ═══════════ QTY PROMPT MODAL ═══════════ */
+let _qtyDesign=null;
+function openQtyPrompt(design){
+  _qtyDesign=design;
+  $('qp-name').textContent=design.name;
+  $('qp-rate').value=money(design.default_rate)>0?money(design.default_rate):'';
+  $('qp-qty').value='';$('qp-remarks').value='';$('qp-msg').textContent='';
+  open_('m-qty');
+  setTimeout(()=>$('qp-qty').focus(),120);
+}
+function confirmQty(){
+  if(!_qtyDesign){shut('m-qty');return}
+  const qty=v('qp-qty');
+  if(!qty||isNaN(parseInt(qty))||parseInt(qty)<1){$('qp-msg').textContent='Enter the number of sets.';return}
+  const existing=lineIdx(_qtyDesign.name);
+  const line={design:_qtyDesign.name,qty:qty.trim(),rate:money(v('qp-rate')),remarks:v('qp-remarks').trim()};
+  if(existing>=0)cart[existing]=line;else cart.push(line);
+  shut('m-qty');drawCart();
+  msg('counter-msg','ok',esc(_qtyDesign.name)+' — '+qty+' sets.',3000);
+}
+
+/* ═══════════ SAVE ORDER FORM ═══════════ */
 function openCheckout(){
-  if(!cart.length){msg('counter-msg','warn','Scan at least one piece first.',4000);return}
-  $('co-desc').textContent=cart.length+' pieces · '+rupee(Math.max(0,cartTotal()-money(v('cart-disc'))))+' to pay. Customer details are optional.';
-  $('co-msg').textContent='';
-  open_('m-checkout');
+  if(!cart.length){msg('counter-msg','warn','Add at least one design line first.',4000);return}
+  if(!v('co-party')){$('co-party').focus();msg('counter-msg','warn','Enter the party name.',4000);return}
+  if(!v('co-mobile')){$('co-mobile').focus();msg('counter-msg','warn','Enter a mobile number.',4000);return}
+  const rows=cart.map((c,i)=>'<tr><td style="padding:4px 8px;color:var(--muted)">'+(i+1)+'</td>'+
+    '<td style="padding:4px 8px;font-weight:500">'+esc(c.design)+'</td>'+
+    '<td style="padding:4px 8px;text-align:center;font-weight:600">'+esc(c.qty)+'</td>'+
+    '<td style="padding:4px 8px;font-family:var(--mono)">'+(money(c.rate)>0?rupee(c.rate):'—')+'</td>'+
+    '<td style="padding:4px 8px;color:var(--muted)">'+esc(c.remarks||'')+'</td></tr>').join('');
+  $('review-body').innerHTML=
+    '<div style="margin-bottom:12px"><b>'+esc(v('co-party'))+'</b>'+
+    (v('co-mobile')?' · '+esc(v('co-mobile')):'')+
+    (v('co-gst')?' · GST '+esc(v('co-gst')):'')+
+    (v('co-transport')?'<br><span style="color:var(--muted)">Transport: '+esc(v('co-transport'))+'</span>':'')+
+    '</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>'+
+    '<th style="padding:4px 8px;text-align:left;border-bottom:1px solid var(--line)">#</th>'+
+    '<th style="padding:4px 8px;text-align:left;border-bottom:1px solid var(--line)">Design</th>'+
+    '<th style="padding:4px 8px;border-bottom:1px solid var(--line)">Sets</th>'+
+    '<th style="padding:4px 8px;border-bottom:1px solid var(--line)">Rate</th>'+
+    '<th style="padding:4px 8px;border-bottom:1px solid var(--line)">Remarks</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    (v('co-remarks')?'<div style="margin-top:8px;font-size:13px;color:var(--muted)">Remarks: '+esc(v('co-remarks'))+'</div>':'');
+  $('review-msg').textContent='';
+  open_('m-review');
 }
 function onCoParty(){
   const hit=parties.find(p=>p.name.toLowerCase()===v('co-party').toLowerCase());
   if(!hit)return;
-  $('co-mobile').value=hit.mobile||'';$('co-gst').value=hit.gst_no||'';$('co-transport').value=hit.transport||'';
+  if(!v('co-mobile'))$('co-mobile').value=hit.mobile||'';
+  if(!v('co-gst'))$('co-gst').value=hit.gst_no||'';
+  if(!v('co-transport'))$('co-transport').value=hit.transport||'';
 }
-async function checkout(){
-  $('co-btn').disabled=true;
-  const body={
-    itemCodes:cart.map(c=>c.item_code),
-    discount:money(v('cart-disc')),
-    remarks:v('co-remarks'),
-    party:{partyName:v('co-party'),mobile:v('co-mobile'),gstNo:v('co-gst').toUpperCase(),transport:v('co-transport')}
+async function confirmManual(){
+  const lines=cart.length?cart:(_mnLines||[]);
+  const party={
+    partyName:v('co-party')||v('mn-party'),mobile:v('co-mobile')||v('mn-mobile'),
+    gstNo:(v('co-gst')||v('mn-gst')).toUpperCase(),transport:v('co-transport')||v('mn-transport'),
+    address:v('co-addr')||v('mn-addr')||'',contactPerson:v('co-contact')||v('mn-contact')||'',
+    agentName:v('co-agent')||v('mn-agent')||'',agentAddress:v('co-agentaddr')||v('mn-agentaddr')||''
   };
-  const r=await api('POST','/api/orders',body);
-  $('co-btn').disabled=false;
-  if(!r.ok){
-    const m=$('co-msg');m.style.color='var(--cancel)';
-    m.textContent=(r.error||'Could not bill.')+(r.codes?' ('+r.codes.join(', ')+')':'');
-    return;
-  }
-  const orderNo=r.orderNo;
-  shut('m-checkout');
-  cart=[];$('cart-disc').value='';['co-party','co-mobile','co-gst','co-transport','co-remarks'].forEach(id=>$(id).value='');
-  drawCart();stats();
-  // Go straight to the order detail page. The Print button there is a direct
-  // user tap so it will never be blocked on mobile. No auto-print popup.
-  openOrder(orderNo);
+  const remarks=v('co-remarks')||v('mn-mrem')||'';
+  $('review-save-btn').disabled=true;
+  const r=await api('POST','/api/orders',{party,lines,remarks});
+  $('review-save-btn').disabled=false;
+  if(!r.ok&&r.error){const m=$('review-msg');m.style.color='var(--cancel)';m.textContent=r.error;return}
+  shut('m-review');
+  cart=[];drawCart();
+  ['co-party','co-mobile','co-gst','co-transport','co-remarks'].forEach(id=>{const e=$(id);if(e)e.value=''});
+  _mnParty=null;_mnLines=null;
+  stats();
+  openOrder(r.orderNo);
 }
+async function checkout(){await confirmManual()}
 
 /* ═══════════ CAMERA (continuous scanning) ═══════════ */
 let stream=null,tick=null,cv=null,cx=null,lastCode='',lastAt=0;
@@ -1129,14 +1192,10 @@ async function camHit(raw){
       f.classList.add('dup');setTimeout(()=>f.classList.remove('dup'),350);
       $('cam-t').style.color='#FBBF24';$('cam-t').textContent='Already scanned';return;
     }
-    addToCart(r.item);
-    f.classList.add('hit');setTimeout(()=>f.classList.remove('hit'),350);
-    $('cam-r').textContent=r.item.design+' · '+rupee(r.item.rate);
-    $('cam-t').style.color='#34D399';$('cam-t').textContent='Piece added — scan the next one, or tap Done.';
-    $('cam-count').textContent=cart.length;
-    // pulse the Done button so it is obvious
-    const db=$('cam-done-btn');if(db){db.textContent='Done ('+cart.length+' piece'+(cart.length===1?'':'s')+')';
-      db.style.transform='scale(1.08)';setTimeout(()=>{db.style.transform=''},300);}
+    // new model: scan opens qty prompt, close camera first
+    closeCam();
+    $('cam-r').textContent=r.item?r.item.design||r.design?.name||'':'';
+    openQtyPrompt(r.item||r.design||{name:raw,default_rate:0});
     return;
   }
   if(r.status==='sold'){$('cam-t').style.color='#F87171';$('cam-t').textContent='Already sold, cannot add.';return}
@@ -1152,8 +1211,10 @@ function closeCam(){
 }
 
 /* ═══════════ STOCK ═══════════ */
-let ts=null;function debStock(){clearTimeout(ts);ts=setTimeout(loadStock,300)}
+let ts=null;function debStock(){}
 async function loadStock(){
+  const el=$('stock-list');if(el)el.innerHTML='<div class="empty" style="padding:24px">Stock tracking has been removed. Use Reports to see orders by design.</div>';
+  return;
   const q=new URLSearchParams();
   if(v('st-search'))q.set('search',v('st-search'));
   if(v('st-status'))q.set('status',v('st-status'));
@@ -1197,48 +1258,42 @@ async function openOrder(no){
   drawOrder(r.order,r.lines||[],r.log||[]);
 }
 function drawOrder(o,lines,log){
-  const manual=(o.order_type==='manual');
+  const manual=true; // all orders now use the design+qty+rate+remarks model
   curOrderType=o.order_type||'scanned';
 
   const rows=lines.length
-    ?(manual
-      ?lines.map((l,i)=>'<tr><td class="code" style="color:var(--muted)">'+String(i+1).padStart(2,'0')+
-        '</td><td style="font-weight:500">'+esc(l.design)+'</td><td class="code">'+esc(l.qty||'—')+
-        '</td><td class="rt">'+(money(l.rate)>0?rupee(l.rate):'—')+'</td><td style="color:var(--muted)">'+esc(l.remarks||'')+'</td></tr>').join('')
-      :lines.map((l,i)=>'<tr><td class="code" style="color:var(--muted)">'+String(i+1).padStart(2,'0')+
-        '</td><td class="code">'+esc(l.item_code)+'</td><td style="font-weight:500">'+esc(l.design)+'</td><td class="rt">'+rupee(l.rate)+'</td></tr>').join(''))
-    :'<tr><td colspan="'+(manual?5:4)+'" class="empty">No lines.</td></tr>';
+    ?lines.map((l,i)=>'<tr><td class="code" style="color:var(--muted)">'+String(i+1).padStart(2,'0')+
+      '</td><td style="font-weight:500">'+esc(l.design)+'</td>'+
+      '<td class="code" style="text-align:center;font-weight:600;font-size:15px">'+esc(l.qty||'—')+'</td>'+
+      '<td class="rt">'+(money(l.rate)>0?rupee(l.rate):'—')+'</td>'+
+      '<td style="color:var(--muted)">'+esc(l.remarks||'')+'</td></tr>').join('')
+    :'<tr><td colspan="5" class="empty">No lines.</td></tr>';
 
   const cancelledBanner=o.status==='Cancelled'
-    ?'<div class="al al-err" style="margin-top:16px">'+ico('warn')+'<span>Cancelled'+(o.cancel_reason?': '+esc(o.cancel_reason):'')+'.'+(manual?'':' The pieces went back to stock.')+'</span></div>':'';
+    ?'<div class="al al-err" style="margin-top:16px">'+ico('warn')+'<span>Cancelled'+(o.cancel_reason?': '+esc(o.cancel_reason):'')+'. This order form is no longer active.</span></div>':'';
 
   const party=(o.party_name||o.mobile||o.gst_no)
     ?'<div class="card"><div class="card-b"><div class="card-h"><div class="card-t">'+(manual?'Party':'Customer')+'</div></div><dl class="kv">'+
       kv('Party',o.party_name)+kv('Mobile',o.mobile)+kv('GST no',o.gst_no)+kv('Transport',o.transport)+(manual?kv('Agent',o.agent_name):'')+'</dl></div></div>'
     :'<div class="card"><div class="card-b"><div class="card-d">Walk-in bill, no customer details.</div></div></div>';
 
-  const topRight=manual
-    ?'<div class="docket-tot"><div class="docket-tot-l">Pieces</div><div class="docket-tot-v">'+o.piece_count+'</div>'+
-      (o.master_qty?'<div style="font-size:12px;color:var(--muted);margin-top:2px">'+esc(o.master_qty)+' total qty</div>':'')+'</div>'
-    :'<div class="docket-tot"><div class="docket-tot-l">Net</div><div class="docket-tot-v">'+rupee(o.net_amount)+'</div>'+
-      (money(o.discount)>0?'<div style="font-size:12px;color:var(--muted);margin-top:2px">after '+rupee(o.discount)+' off</div>':'')+'</div>';
+  const topRight='<div class="docket-tot"><div class="docket-tot-l">Designs</div>'+
+    '<div class="docket-tot-v">'+(o.line_count||lines.length)+'</div></div>';
 
-  const typeTag=manual?'<span class="tag-manual">Order form</span>':'<span class="tag-scanned">Stock bill</span>';
+  const typeTag='<span class="tag-manual">Order form</span>';
 
   const printBtn=manual
     ?'<button class="b b-gold" onclick="printByNo(\''+esc(o.order_no)+'\')">Print order</button>'
     :'<button class="b b-gold" onclick="printByNo(\''+esc(o.order_no)+'\')">Print bill</button>';
   const cancelBtn=(o.status!=='Cancelled')
-    ?'<button class="b b-dan" onclick="askCancel(\''+esc(o.order_no)+'\')">'+(manual?'Void order':'Cancel bill')+'</button>':'';
+    ?'<button class="b b-dan" onclick="askCancel(\''+esc(o.order_no)+'\')">'+(manual?'Cancel order form':'Cancel order form')+'</button>':'';
 
-  const linesCard=manual
-    ?'<div class="card"><div class="card-b"><div class="card-h"><div><div class="card-t">Design lines</div><div class="card-d">'+lines.length+' lines</div></div></div>'+
-      '<div class="tw"><table><thead><tr><th style="width:34px">#</th><th>Design</th><th style="width:70px">Qty</th><th style="width:80px">Rate</th><th>Remarks</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-      (o.remarks?'<div class="sep"></div><dl class="kv">'+kv('Order remarks',o.remarks)+'</dl>':'')+
-    '</div></div>'
-    :'<div class="card"><div class="card-b"><div class="card-h"><div><div class="card-t">Pieces</div><div class="card-d">'+lines.length+' items</div></div></div>'+
-      '<div class="tw"><table><thead><tr><th style="width:34px">#</th><th>Code</th><th>Design</th><th style="width:80px">Rate</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-      '<div class="sep"></div><dl class="kv">'+kv('Total',rupee(o.total_amount))+kv('Discount',rupee(o.discount))+kv('Net payable',rupee(o.net_amount))+(o.remarks?kv('Remarks',o.remarks):'')+'</dl>'+
+  const linesCard='<div class="card"><div class="card-b">'+
+    '<div class="card-h"><div><div class="card-t">Design lines</div><div class="card-d">'+lines.length+' design'+(lines.length===1?'':'s')+'</div></div></div>'+
+    '<div class="tw"><table><thead><tr><th style="width:34px">#</th><th>Design</th>'+
+    '<th style="width:60px;text-align:center">Sets</th><th style="width:80px">Rate</th><th>Remarks</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table></div>'+
+    (o.remarks?'<div class="sep"></div><dl class="kv">'+kv('Remarks',o.remarks)+'</dl>':'')+
     '</div></div>';
 
   $('detail').innerHTML=
@@ -1264,11 +1319,11 @@ function kv(l,val){return '<dt>'+esc(l)+'</dt><dd'+(val?'':' class="none"')+'>'+
 
 function askCancel(no){cancelTarget=no;$('cn-reason').value='';$('cn-pin').value='';$('cn-msg').textContent='';
   const manual=curOrderType==='manual';
-  $('cn-title')&&($('cn-title').textContent=manual?'Void this order':'Cancel this bill');
+  $('cn-title')&&($('cn-title').textContent=manual?'Void this order':'Cancel order form');
   $('cn-desc')&&($('cn-desc').textContent=manual
     ?'This marks the order form cancelled. No stock is affected. Enter the admin PIN.'
-    :'The pieces on this bill go back into stock and can be sold again. Enter the admin PIN.');
-  $('cn-do')&&($('cn-do').textContent=manual?'Void order':'Cancel bill');
+    :'This cancels the order form. Enter the admin PIN.');
+  $('cn-do')&&($('cn-do').textContent=manual?'Cancel order form':'Cancel order form');
   open_('m-cancel')}
 async function submitCancel(){
   if(!cancelTarget)return;
@@ -1320,7 +1375,7 @@ async function runReport(){
   const r=await api('GET','/api/report/range?from='+encodeURIComponent(f)+'&to='+encodeURIComponent(t));
   lastReport=r;
   $('report').innerHTML=
-    '<div class="tiles">'+tile(r.billedCount,'Bills')+tile(r.pieces,'Pieces sold')+
+    '<div class="tiles">'+tile(r.activeCount,'Bills')+tile(r.pieces,'Pieces sold')+
       tile(rupee(r.sales),'Net sales')+tile(r.cancelledCount,'Cancelled')+'</div>'+
     '<div class="card"><div class="card-b"><div class="card-h"><div class="card-t">By design</div>'+
       '<button class="b b-out b-sm" onclick="csv()">Download CSV</button></div><div class="tw">'+
@@ -1328,7 +1383,7 @@ async function runReport(){
         r.byDesign.map(d=>'<tr><td style="font-weight:500">'+esc(d.design)+'</td><td class="code">'+d.pieces+'</td><td class="rt">'+rupee(d.amount)+'</td></tr>').join('')+'</tbody></table>'
         :blank('Nothing in this range.'))+'</div></div></div>'+
     '<div class="card"><div class="card-b"><div class="card-h"><div class="card-t">By party</div></div><div class="tw">'+
-      (r.byParty&&r.byParty.length?'<table><thead><tr><th>Party</th><th>Bills</th><th>Pieces</th><th>Amount</th></tr></thead><tbody>'+
+      (r.byParty&&r.byParty.length?'<table><thead><tr><th>Party</th><th>Orders</th><th>Pieces</th><th>Amount</th></tr></thead><tbody>'+
         r.byParty.map(p=>'<tr><td style="font-weight:500">'+esc(p.party)+'</td><td class="code">'+p.orders+'</td><td class="code">'+p.pieces+'</td><td class="rt">'+rupee(p.amount)+'</td></tr>').join('')+'</tbody></table>'
         :blank('Nothing in this range.'))+'</div></div></div>';
 }
@@ -1345,7 +1400,7 @@ function csv(){
 }
 
 /* ═══════════ STATS / SETTINGS ═══════════ */
-async function stats(){const s=await api('GET','/api/stats');if(s.error)return;/* header stats live in nav on desktop only; keep light */}
+async function stats(){const s=await api('GET','/api/stats');if(s.error)return;}
 async function loadSettings(){settings=await api('GET','/api/settings')||{};
   if(settings.company_name){$('brand').textContent=settings.company_name;$('brand-m').textContent=(settings.company_name||'').split(' ')[0]}}
 function fillSettings(){
@@ -1403,109 +1458,86 @@ async function printByNo(no){
   if(r.order.order_type==='manual')printOrderDocket(r.order,r.lines||[]);
   else printBill(r.order,r.lines||[]);
 }
-function printBill(o,lines){
+/* ═══════════ PRINT: ORDER FORM ═══════════ */
+// One print function for all orders. No item codes. No totals. No status.
+// Just: header, party, design table (design / sets / rate / remarks), remarks, QR.
+function printBill(o,lines){printOrderForm(o,lines)}
+function printOrderDocket(o,lines){printOrderForm(o,lines)}
+function printOrderForm(o,lines){
   const c=document.createElement('canvas');
   new QRious({element:c,value:url(o.order_no),size:130,background:'#ffffff',foreground:'#000000',level:'H'});
   const qr=c.toDataURL('image/png');const s=settings;
-  const rows=lines.map((l,i)=>'<tr><td class="c">'+(i+1)+'</td><td class="mono">'+esc(l.item_code)+'</td><td><b>'+esc(l.design)+'</b></td><td class="r">'+rupee(l.rate)+'</td></tr>').join('');
+  const rows=lines.map((l,i)=>'<tr><td class="c">'+(i+1)+
+    '</td><td><b>'+esc(l.design)+'</b></td>'+
+    '<td class="c big">'+esc(l.qty||'')+'</td>'+
+    '<td class="r">'+(money(l.rate)>0?rupee(l.rate):'')+'</td>'+
+    '<td class="rem">'+esc(l.remarks||'')+'</td></tr>').join('');
   const w=window.open('','_blank','width=900,height=1000');
   if(!w){alert('The print window was blocked. Allow pop-ups and try again.');return}
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill '+esc(o.order_no)+'</title><style>'+
-    '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;color:#000;padding:10mm;font-size:10.5pt}'+
-    '.sheet{max-width:190mm;margin:0 auto}.mono{font-family:monospace}'+
-    '.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:4mm;gap:8mm}'+
-    '.co{font-size:19pt;font-weight:bold}.tag{font-size:8pt;font-style:italic;margin-top:.5mm}'+
-    '.ln{font-size:9pt;margin-top:2mm;line-height:1.45}'+
-    '.qr{text-align:center;flex-shrink:0}.qr img{width:24mm;height:24mm;display:block}.qr-c{font-size:7pt;margin-top:1mm;color:#333}'+
-    '.no{font-size:13pt;font-weight:bold;margin-top:1mm}'+
-    '.meta{display:flex;justify-content:space-between;font-size:9pt;margin:4mm 0 2mm}'+
-    '.cust{border:1px solid #000;padding:2.5mm 3mm;font-size:9.5pt;margin-bottom:3mm;line-height:1.6}'+
-    'table{width:100%;border-collapse:collapse;margin-top:1mm}'+
-    'th,td{border:1px solid #000;padding:1.8mm 2.5mm;font-size:9.5pt;text-align:left}'+
-    'th{background:#EEE;font-size:8pt;text-transform:uppercase;letter-spacing:.4px}'+
-    'td.c{text-align:center;width:9mm}td.r,th.r{text-align:right;width:24mm}'+
-    '.tot{margin-top:4mm;margin-left:auto;width:70mm}'+
-    '.tot div{display:flex;justify-content:space-between;padding:1.4mm 0;font-size:10pt}'+
-    '.tot .net{border-top:1.5px solid #000;margin-top:1mm;padding-top:2mm;font-size:13pt;font-weight:bold}'+
-    '.mono-r{font-family:monospace}'+
-    '.foot{margin-top:8mm;font-size:7.5pt;color:#555;text-align:center;border-top:1px solid #CCC;padding-top:2mm}'+
-    '@media print{@page{size:A4 portrait;margin:8mm}body{padding:0}}'+
-    '</style></head><body><div class="sheet">'+
-    '<div class="head"><div>'+
-      '<div class="co">'+esc(s.company_name||'Sushant Prints Pvt Ltd')+'</div>'+
-      (s.company_tagline?'<div class="tag">'+esc(s.company_tagline)+'</div>':'')+
-      '<div class="ln">'+esc(s.company_address||'')+'</div>'+
-      '<div class="ln"><b>GST:</b> '+esc(s.company_gst||'')+'&nbsp;&nbsp;<b>Ph:</b> '+esc(s.company_phone||'')+'&nbsp;&nbsp;<b>Mob:</b> '+esc(s.company_mobile||'')+'</div>'+
-    '</div><div class="qr"><img src="'+qr+'"><div class="qr-c">Scan for this bill</div><div class="no">'+esc(o.order_no)+'</div></div></div>'+
-    '<div class="meta"><div><b>Date:</b> '+esc(o.created_at)+'</div><div><b>Status:</b> '+esc(o.status)+'</div></div>'+
-    ((o.party_name||o.mobile||o.gst_no)?'<div class="cust"><b>'+esc(o.party_name||'')+'</b>'+
-      (o.mobile?' &nbsp;·&nbsp; '+esc(o.mobile):'')+(o.gst_no?' &nbsp;·&nbsp; GST '+esc(o.gst_no):'')+
-      (o.transport?'<br>Transport: '+esc(o.transport):'')+'</div>':'')+
-    '<table><thead><tr><th class="c">#</th><th>Item code</th><th>Design</th><th class="r">Rate</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<div class="tot">'+
-      '<div><span>Pieces</span><span class="mono-r">'+o.piece_count+'</span></div>'+
-      '<div><span>Total</span><span class="mono-r">'+rupee(o.total_amount)+'</span></div>'+
-      (money(o.discount)>0?'<div><span>Discount</span><span class="mono-r">- '+rupee(o.discount)+'</span></div>':'')+
-      '<div class="net"><span>Net payable</span><span class="mono-r">'+rupee(o.net_amount)+'</span></div>'+
-    '</div>'+
-    (o.remarks?'<div style="margin-top:4mm;font-size:9pt"><b>Remarks:</b> '+esc(o.remarks)+'</div>':'')+
-    '<div class="foot">Printed '+new Date().toLocaleString('en-IN')+' · Scan the QR to pull up this bill any time.</div>'+
-    '</div><script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>');
-  w.document.close();
-}
-
-/* ═══════════ PRINT: ORDER DOCKET (manual/typed) ═══════════ */
-function printOrderDocket(o,lines){
-  const c=document.createElement('canvas');
-  new QRious({element:c,value:url(o.order_no),size:130,background:'#ffffff',foreground:'#000000',level:'H'});
-  const qr=c.toDataURL('image/png');const s=settings;
-  const rows=lines.map((l,i)=>'<tr><td class="c">'+(i+1)+'</td><td><b>'+esc(l.design)+'</b></td>'+
-    '<td class="c">'+esc(l.qty||'')+'</td><td class="r">'+(money(l.rate)>0?rupee(l.rate):'')+'</td>'+
-    '<td>'+esc(l.remarks||'')+'</td></tr>').join('');
-  const w=window.open('','_blank','width=900,height=1000');
-  if(!w){alert('The print window was blocked. Allow pop-ups and try again.');return}
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Order '+esc(o.order_no)+'</title><style>'+
-    '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;color:#000;padding:10mm;font-size:10.5pt}'+
-    '.sheet{max-width:190mm;margin:0 auto}'+
-    '.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:4mm;gap:8mm}'+
-    '.co{font-size:19pt;font-weight:bold}.tag{font-size:8pt;font-style:italic;margin-top:.5mm}'+
-    '.ln{font-size:9pt;margin-top:2mm;line-height:1.45}'+
-    '.qr{text-align:center;flex-shrink:0}.qr img{width:24mm;height:24mm;display:block}.qr-c{font-size:7pt;margin-top:1mm;color:#333}'+
-    '.no{font-size:13pt;font-weight:bold;margin-top:1mm}'+
-    '.doc-tag{display:inline-block;border:1px solid #000;border-radius:2mm;padding:.5mm 2mm;font-size:8pt;text-transform:uppercase;letter-spacing:.5px;margin-top:1.5mm}'+
-    '.meta{display:flex;justify-content:space-between;font-size:9pt;margin:4mm 0 2mm}'+
-    '.cust{border:1px solid #000;padding:2.5mm 3mm;font-size:9.5pt;margin-bottom:3mm;line-height:1.6}'+
-    'table{width:100%;border-collapse:collapse;margin-top:1mm}'+
-    'th,td{border:1px solid #000;padding:1.8mm 2.5mm;font-size:9.5pt;text-align:left}'+
-    'th{background:#EEE;font-size:8pt;text-transform:uppercase;letter-spacing:.4px}'+
-    'td.c,th.c{text-align:center;width:14mm}td.r,th.r{text-align:right;width:22mm}'+
-    '.mtot{margin-top:4mm;font-size:10pt}'+
-    '.foot{margin-top:8mm;font-size:7.5pt;color:#555;text-align:center;border-top:1px solid #CCC;padding-top:2mm}'+
-    '@media print{@page{size:A4 portrait;margin:8mm}body{padding:0}}'+
-    '</style></head><body><div class="sheet">'+
-    '<div class="head"><div>'+
-      '<div class="co">'+esc(s.company_name||'Sushant Prints Pvt Ltd')+'</div>'+
-      (s.company_tagline?'<div class="tag">'+esc(s.company_tagline)+'</div>':'')+
-      '<div class="ln">'+esc(s.company_address||'')+'</div>'+
-      '<div class="ln"><b>GST:</b> '+esc(s.company_gst||'')+'&nbsp;&nbsp;<b>Ph:</b> '+esc(s.company_phone||'')+'&nbsp;&nbsp;<b>Mob:</b> '+esc(s.company_mobile||'')+'</div>'+
-    '</div><div class="qr"><img src="'+qr+'"><div class="qr-c">Scan for this order</div><div class="no">'+esc(o.order_no)+'</div><div class="doc-tag">Order form</div></div></div>'+
-    '<div class="meta"><div><b>Date:</b> '+esc(o.created_at)+'</div><div><b>Status:</b> '+esc(o.status)+'</div></div>'+
-    '<div class="cust"><b>'+esc(o.party_name||'')+'</b>'+
-      (o.mobile?' &nbsp;·&nbsp; '+esc(o.mobile):'')+(o.gst_no?' &nbsp;·&nbsp; GST '+esc(o.gst_no):'')+
-      (o.party_address?'<br>'+esc(o.party_address):'')+
-      (o.contact_person?'<br>Contact: '+esc(o.contact_person):'')+
-      (o.transport?'<br>Transport: '+esc(o.transport):'')+
-      (o.agent_name?'<br>Agent: '+esc(o.agent_name)+(o.agent_address?', '+esc(o.agent_address):''):'')+'</div>'+
-    '<table><thead><tr><th class="c">#</th><th>Design</th><th class="c">Qty</th><th class="r">Rate</th><th>Remarks</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    (o.master_qty?'<div class="mtot"><b>Total quantity:</b> '+esc(o.master_qty)+'</div>':'')+
-    (o.remarks?'<div style="margin-top:3mm;font-size:9pt"><b>Remarks:</b> '+esc(o.remarks)+'</div>':'')+
-    '<div class="foot">Printed '+new Date().toLocaleString('en-IN')+' · This is a typed order form, not a stock bill. Scan the QR to pull it up any time.</div>'+
-    '</div><script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Order Form ${esc(o.order_no)}</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;color:#000;padding:10mm;font-size:10.5pt}
+.sheet{max-width:190mm;margin:0 auto}
+.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #000;padding-bottom:4mm;gap:8mm}
+.co{font-size:20pt;font-weight:bold;letter-spacing:-.5px}
+.tag{font-size:8pt;font-style:italic;margin-top:1mm}
+.ln{font-size:9pt;margin-top:2mm;line-height:1.5}
+.qr{text-align:center;flex-shrink:0}
+.qr img{width:26mm;height:26mm;display:block}
+.qr-c{font-size:7pt;margin-top:1mm;color:#444}
+.no{font-size:14pt;font-weight:bold;margin-top:1.5mm;letter-spacing:-.5px}
+.form-tag{font-size:8pt;text-transform:uppercase;letter-spacing:.8px;color:#555;margin-top:2mm;border:1px solid #999;display:inline-block;padding:1px 5px;border-radius:2px}
+.meta{font-size:9pt;margin:4mm 0 2mm;color:#333}
+.cust{border:1.5px solid #000;padding:3mm 4mm;font-size:10pt;margin-bottom:4mm;line-height:1.65}
+table{width:100%;border-collapse:collapse;margin-top:0}
+th,td{border:1px solid #000;padding:2mm 2.5mm;font-size:9.5pt;text-align:left;vertical-align:top}
+th{background:#EBEBEB;font-size:8pt;text-transform:uppercase;letter-spacing:.4px}
+td.c{text-align:center;width:10mm}
+td.big{font-size:13pt;font-weight:700;text-align:center;width:18mm}
+td.r{text-align:right;width:24mm;font-family:monospace}
+td.rem{color:#444;font-size:9pt;width:auto}
+.remarks-block{margin-top:4mm;font-size:9pt;border-top:1px dashed #999;padding-top:2mm}
+.foot{margin-top:10mm;font-size:7.5pt;color:#777;text-align:center;border-top:1px solid #CCC;padding-top:2mm}
+.sig-row{display:flex;gap:20mm;margin-top:12mm}
+.sig{flex:1;border-top:1px solid #000;padding-top:2mm;font-size:8pt;color:#555;text-align:center}
+@media print{@page{size:A4 portrait;margin:8mm}body{padding:0}}
+</style></head><body><div class="sheet">
+<div class="head"><div>
+  <div class="co">${esc(s.company_name||'Sushant Prints Pvt Ltd')}</div>
+  ${s.company_tagline?'<div class="tag">'+esc(s.company_tagline)+'</div>':''}
+  <div class="ln">${esc(s.company_address||'')}</div>
+  <div class="ln"><b>GST:</b> ${esc(s.company_gst||'')} &nbsp; <b>Ph:</b> ${esc(s.company_phone||'')} &nbsp; <b>Mob:</b> ${esc(s.company_mobile||'')}</div>
+</div><div class="qr">
+  <img src="${qr}">
+  <div class="qr-c">Scan to open order</div>
+  <div class="no">${esc(o.order_no)}</div>
+  <div class="form-tag">Order Form</div>
+</div></div>
+<div class="meta"><b>Date:</b> ${esc(o.created_at)}</div>
+<div class="cust">
+  <b>${esc(o.party_name||'')}</b>${o.mobile?' &nbsp;·&nbsp; '+esc(o.mobile):''}${o.gst_no?' &nbsp;·&nbsp; GST '+esc(o.gst_no):''}
+  ${o.party_address?'<br>'+esc(o.party_address):''}
+  ${o.contact_person?'<br>Contact: '+esc(o.contact_person):''}
+  ${o.transport?'<br>Transport: '+esc(o.transport):''}
+  ${o.agent_name?'<br>Agent: '+esc(o.agent_name)+(o.agent_address?', '+esc(o.agent_address):''):''}
+</div>
+<table><thead><tr>
+  <th class="c">#</th><th>Design</th><th class="c" style="width:20mm">Sets</th>
+  <th class="r">Rate</th><th>Remarks</th>
+</tr></thead><tbody>${rows}</tbody></table>
+${o.remarks?'<div class="remarks-block"><b>Remarks:</b> '+esc(o.remarks)+'</div>':''}
+<div class="sig-row">
+  <div class="sig">Party signature</div>
+  <div class="sig">Prepared by</div>
+</div>
+<div class="foot">Printed ${new Date().toLocaleString('en-IN')} · Scan the QR to view this order form any time.</div>
+</div><script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>`);
   w.document.close();
 }
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
   if($('cam').classList.contains('on'))closeCam();
-  ['m-checkout','m-cancel','menu'].forEach(i=>{if($(i).classList.contains('on'))shut(i)})});
+  ['m-checkout','m-cancel','m-qty','menu'].forEach(i=>{const el=$(i);if(el&&el.classList.contains('on'))shut(i)})});
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on')}));
 </script>
 </body>
