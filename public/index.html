@@ -990,21 +990,37 @@ function drawGenPreview(){
   const gd=$('gp-d');if(gd)gd.textContent=d;
   const gr=$('gp-r');if(gr)gr.textContent=rupee(r);
   // QR encodes 'd:<design name>' so scanning at the counter triggers the qty prompt
-  try{new QRious({element:$('gen-qr'),value:location.origin+'/d/'+encodeURIComponent(d),size:74,background:'#ffffff',foreground:'#141019',level:'H'})}catch(e){}
+  // Preview mirrors the real label: short /d/<id> payload at level M
+  const known=designs.find(x=>x.name.toLowerCase()===d.toLowerCase());
+  const previewVal=location.origin+'/d/'+(known&&known.id?known.id:'0');
+  try{new QRious({element:$('gen-qr'),value:previewVal,size:74,background:'#ffffff',foreground:'#141019',level:'M',padding:4})}catch(e){}
 }
 async function printDesignLabel(){
   const design=v('gen-design');
   if(!design){msg('gen-msg','err','Pick or type a design first.',4000);$('gen-design').focus();return}
   const rate=money(v('gen-rate'));
   const copies=Math.max(1,parseInt(v('gen-copies'))||1);
-  // Save the rate to the design master
-  if(rate>0) await api('POST','/api/designs/rate',{name:design,rate});
-  // Build an array of N identical label items (same design, same QR)
-  // Use /d/<name> URL so the QR decodes cleanly without encoded colons
-  const labels=Array.from({length:copies},()=>({item_code:'/d/'+encodeURIComponent(design),design,rate}));
-  printLabels(labels,v('gen-size'),design,rate);
-  msg('gen-msg','ok','Printing '+copies+' label'+(copies>1?'s':'')+' for '+design+'.',5000);
-  await loadDesigns();loadGenDesignList();
+
+  // The QR carries the design's numeric id, not its name. A short payload keeps
+  // the QR coarse and readable; a long name makes it too dense for a phone camera.
+  let d=designs.find(x=>x.name.toLowerCase()===design.toLowerCase());
+  if(!d){
+    const cr=await api('POST','/api/designs',{name:design,rate});
+    if(cr.error){msg('gen-msg','err',cr.error,5000);return}
+    await loadDesigns();
+    d=cr.design||designs.find(x=>x.name.toLowerCase()===design.toLowerCase());
+  }else if(rate>0&&money(d.default_rate)!==rate){
+    await api('POST','/api/designs/rate',{name:design,rate});
+    await loadDesigns();
+    d=designs.find(x=>x.name.toLowerCase()===design.toLowerCase())||d;
+  }
+  if(!d||!d.id){msg('gen-msg','err','Could not save that design. Try again.',5000);return}
+
+  const useRate=rate||money(d.default_rate);
+  const labels=Array.from({length:copies},()=>({item_code:'/d/'+d.id,design:d.name,rate:useRate}));
+  printLabels(labels,v('gen-size'),d.name,useRate);
+  msg('gen-msg','ok','Printing '+copies+' label'+(copies>1?'s':'')+' for '+d.name+'.',5000);
+  loadGenDesignList();
 }
 function pickDesignLabel(name,rate){
   $('gen-design').value=name;
@@ -1238,9 +1254,15 @@ async function frame(){
     }else{
       cv.width=w;cv.height=h;cx.drawImage(vd,0,0,w,h);
       const d=cx.getImageData(0,0,w,h);
-      // try both inversion modes — printed labels sometimes read better inverted
-      let c=jsQR(d.data,w,h,{inversionAttempts:'dontInvert'});
-      if(!c) c=jsQR(d.data,w,h,{inversionAttempts:'attemptBoth'});
+      let c=jsQR(d.data,w,h,{inversionAttempts:'attemptBoth'});
+      if(!c){
+        // Second pass on a centre crop. When the label is small in frame the QR
+        // covers too few pixels to decode; cropping effectively zooms in on it.
+        const cw=Math.floor(w*0.6),ch=Math.floor(h*0.6);
+        const sx=Math.floor((w-cw)/2),sy=Math.floor((h-ch)/2);
+        const d2=cx.getImageData(sx,sy,cw,ch);
+        c=jsQR(d2.data,cw,ch,{inversionAttempts:'attemptBoth'});
+      }
       camDiag('jsQR scanner · '+w+'×'+h+' · frames '+frameCount);
       if(c&&c.data){camHit(c.data);return}
     }
@@ -1491,18 +1513,20 @@ async function runBackup(){const m=$('bk-msg');m.style.color='var(--muted)';m.te
 
 /* ═══════════ PRINT: LABELS ═══════════ */
 function printLabels(items,size,design,rate){
-  const S={'3':{cols:3,h:42,qr:70,fs:8},'2':{cols:2,h:50,qr:96,fs:9},'1':{cols:2,h:128,qr:170,fs:11}}[size]||{cols:2,h:50,qr:96,fs:9};
+  // Bigger QR than before. A phone camera needs each module to be a clear square,
+  // so the QR gets the space it needs and the text sits alongside it.
+  const S={'3':{cols:3,h:52,qr:104,fs:8},'2':{cols:2,h:64,qr:140,fs:9},'1':{cols:2,h:150,qr:230,fs:11}}[size]||{cols:2,h:64,qr:140,fs:9};
   const co=settings.company_name||'Sushant Prints Pvt Ltd';
   let cells='';
   items.forEach(it=>{
     const c=document.createElement('canvas');
-    // For design labels (item_code starts with /d/) use a clean /d/<name> URL.
-    // For legacy item codes use the /o/<code> URL.
+    // Design labels carry a short /d/<id> URL. Legacy item codes use /o/<code>.
     const qrVal=it.item_code.startsWith('/d/')
       ? location.origin+it.item_code
       : url(it.item_code);
-    new QRious({element:c,value:qrVal,size:S.qr,background:'#ffffff',foreground:'#000000',level:'H'});
-    // Show design name on the label, not the raw item_code path
+    // Level M with a white quiet zone. Level H packed too many modules into the
+    // same space and the printed result blurred out under a camera.
+    new QRious({element:c,value:qrVal,size:S.qr,background:'#ffffff',foreground:'#000000',level:'M',padding:6});
     const labelCode=it.item_code.startsWith('/d/')?it.design:it.item_code;
     cells+='<div class="lb"><div class="lb-l">'+
       '<div class="lb-co">'+esc(co)+'</div>'+

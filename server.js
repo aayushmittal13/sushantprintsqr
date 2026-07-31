@@ -257,8 +257,10 @@ app.post('/api/designs', auth, wrap(async (req, res) => {
   try {
     const m = await get(`SELECT MAX(sort_order) AS m FROM designs`);
     const ord = (m && m.m != null) ? parseInt(m.m) : 0;
-    await run(`INSERT INTO designs(name,default_rate,sort_order) VALUES($1,$2,$3)`, [name, rate, ord + 1]);
-    res.json({ ok: true });
+    const row = await get(
+      `INSERT INTO designs(name,default_rate,sort_order) VALUES($1,$2,$3) RETURNING *`,
+      [name, rate, ord + 1]);
+    res.json({ ok: true, design: row });
   } catch(e) {
     if (e.code === '23505') return res.status(409).json({ error: 'That design is already in the list' });
     throw e;
@@ -303,11 +305,16 @@ app.post('/api/scan', auth, wrap(async (req, res) => {
   }
   code = code.replace(/^\/+|\/+$/, '');
 
-  // Explicit design path markers: 'd:name' or '/d/name'
+  // Explicit design path markers: 'd:name' or '/d/name' or '/d/<id>'
   let designName = null;
   if (code.startsWith('d:'))  designName = code.slice(2).trim();
   if (code.startsWith('/d/')) designName = decodeURIComponent(code.slice(3)).trim();
   if (designName !== null) {
+    // Labels carry the numeric design id to keep the QR small and easy to read.
+    if (/^\d+$/.test(designName)) {
+      const byId = await get(`SELECT * FROM designs WHERE id=$1`, [parseInt(designName)]);
+      if (byId) return res.json({ status: 'design', design: byId });
+    }
     const d = await get(`SELECT * FROM designs WHERE LOWER(name)=LOWER($1)`, [designName]);
     if (d) return res.json({ status: 'design', design: d });
     // Not in master yet — return the name anyway so the counter can add it
