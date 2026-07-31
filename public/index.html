@@ -599,6 +599,7 @@ th:last-child,td:last-child{padding-right:4px}
             <div class="f" style="margin:0"><input type="text" id="new-design-rate" inputmode="numeric" placeholder="Default rate ₹" onkeydown="if(event.key==='Enter')addDesign()"></div>
             <div class="f" style="margin:0"><button class="b b-ink b-full" onclick="addDesign()">Add design</button></div>
           </div>
+          <div id="design-add-msg" style="font-size:13px;margin-bottom:10px"></div>
           <div id="design-list"></div>
         </div></div>
         <div class="card"><div class="card-b"><div class="card-h"><div class="card-t">Parties</div></div><div class="tw" id="party-list"></div></div></div>
@@ -1343,9 +1344,18 @@ async function submitCancel(){
 async function addDesign(){
   const name=v('new-design');if(!name)return;
   const r=await api('POST','/api/designs',{name,rate:v('new-design-rate')});
-  if(r.error){alert(r.error);return}
+  const msgEl=$('design-add-msg');
+  if(r.error){
+    if(msgEl){msgEl.style.color='var(--cancel)';msgEl.textContent=r.error;setTimeout(()=>{msgEl.textContent=''},4000)}
+    return;
+  }
   $('new-design').value='';$('new-design-rate').value='';
-  await loadDesigns();drawDesigns();
+  await loadDesigns();drawDesigns();loadGenDesignList();
+  if(msgEl){
+    msgEl.style.color='var(--stock)';
+    msgEl.textContent='"'+name+'" added to the design list.';
+    setTimeout(()=>{msgEl.textContent=''},4000);
+  }
 }
 async function setRate(name,rate){await api('POST','/api/designs/rate',{name,rate});await loadDesigns()}
 async function delDesign(n){if(!confirm('Remove "'+n+'"? Pieces already made keep their design.'))return;
