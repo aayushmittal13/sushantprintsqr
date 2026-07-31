@@ -1,0 +1,183 @@
+SUSHANT PRINTS — COUNTER & LABELLING SYSTEM
+Setup and daily-use guide
+
+
+WHAT THIS SYSTEM DOES
+
+Three jobs, one app.
+
+  1. Generate QR — you make labels for a batch of pieces, print them, and stick
+     one on each saree. Every label carries a unique code, its design name, the
+     rate, and your shop name.
+
+  2. Scan — at the counter you scan each piece a customer is buying. The
+     scans collect into a cart. You hit Bill, and it makes one bill listing every
+     piece, marks those pieces sold, and prints. Customer details are optional.
+
+  3. Order form — a typed order for when scanning is not possible (a phone
+     order, or the scanner is down). You type the party and the design lines by
+     hand and it prints an order docket. This one does NOT touch stock. It is a
+     fallback, not the main way to sell.
+
+Because every piece is tracked from the moment you print its label, the system
+also tells you what is still in stock and what has sold. That is your inventory,
+for free. Bills keeps both kinds of order side by side: scanned bills (which move
+stock) and typed order forms (which do not), each clearly tagged.
+
+
+────────────────────────────────────────────────────────────────────
+PART 1 — GETTING IT ONLINE (one time, about 20 minutes)
+────────────────────────────────────────────────────────────────────
+
+You need three free things: a place to run the app (Render), a place to keep the
+data (Neon), and later, your own web address. Do them in this order.
+
+
+STEP 1 — PUT THE CODE ON GITHUB
+
+  1. Make a free account at github.com if you do not have one.
+  2. Make a new repository, name it anything, for example sushant-orders.
+  3. Upload all the files from this folder into it (server.js, package.json,
+     package-lock.json, render.yaml, and the public folder).
+
+
+STEP 2 — MAKE THE DATABASE (Neon)
+
+This is where every label and bill is stored. It is permanent and free.
+
+  1. Go to neon.tech and sign up with your GitHub account.
+  2. Create a project. Name it sushant. For region pick Singapore, it is closest.
+  3. Neon shows you a "connection string". It looks like:
+         postgresql://user:password@ep-something.neon.tech/neondb
+     Copy the whole thing. If Neon offers a "pooled" string, copy that one.
+     Keep it safe, it is the key to your data.
+
+
+STEP 3 — RUN THE APP (Render)
+
+  1. Go to render.com and sign up with GitHub.
+  2. Click New, then Web Service. Connect the repository from Step 1.
+  3. Render reads render.yaml and fills most settings in. Confirm:
+         Build command:  npm install
+         Start command:  node server.js
+  4. Open the Environment section and add these values:
+
+         DATABASE_URL   the connection string you copied from Neon
+         APP_PASSWORD   the password your staff will type to sign in
+         ADMIN_PIN      a 4-digit PIN, needed to cancel a bill or delete a piece
+         CHANGE_PIN     a 4-digit PIN for protected settings
+
+  5. Click Create. First build takes a few minutes. When it says Live, open the
+     web address Render gives you (something.onrender.com) and sign in.
+
+If the log ever says "DATABASE_URL not set", the database value in Step 4 is
+missing or wrong. Fix it and Render restarts on its own.
+
+
+STEP 4 — YOUR OWN WEB ADDRESS (do this BEFORE printing real labels)
+
+This step matters. Every QR label points at a web address. If you print labels on
+the free Render address and later move, every printed label stops working.
+
+  So: buy a domain first. A .in address is about 700 to 900 rupees a year from
+  GoDaddy, Hostinger, or BigRock. In Render, open Settings, then Custom Domain,
+  add your domain, and follow the steps it shows. Once your domain opens the app,
+  you are safe to print labels for real.
+
+Until then, feel free to practise: generate a test batch, scan, bill, but treat
+those labels as scrap.
+
+
+────────────────────────────────────────────────────────────────────
+PART 2 — USING IT EVERY DAY
+────────────────────────────────────────────────────────────────────
+
+MAKING LABELS (Generate QR)
+
+  1. Open Generate QR.
+  2. Pick or type the design. If the design has a saved rate it fills in for you.
+  3. Set the rate for this batch. The rate can be different each time, even for
+     the same design, that is fine.
+  4. Enter how many pieces.
+  5. Choose a label size (small fits 18 to a sheet, medium 10, large 4).
+  6. Click Generate and print labels. A print sheet opens. Print it, cut, and
+     stick one label on each piece.
+
+Every label is its own unique code, so no two pieces are ever mixed up. You can
+reprint any past batch from the Recent batches list.
+
+
+SELLING AT THE COUNTER
+
+  1. Open Counter (on a phone this is the first screen, called Sell).
+  2. Tap Scan a piece. The camera opens and keeps scanning. Point at each piece
+     one by one, the cart fills as you go. Or type a code and press Add.
+  3. When every piece is in the cart, tap Done to review.
+  4. Add a discount if you are giving one.
+  5. Tap Bill and print. If the customer wants a proper bill, type their name and
+     details, otherwise leave it blank for a quick bill. Confirm, and the bill
+     prints with every piece listed.
+
+A piece already sold cannot be scanned again, the system stops it. So the same
+saree can never be billed twice.
+
+
+FINDING AND CANCELLING BILLS
+
+  Bills lists every order. Tap one to see it in full, reprint it, or cancel it.
+  Cancelling asks for the admin PIN and puts every piece on that bill back into
+  stock so it can be sold again.
+
+
+STOCK
+
+  Stock shows every piece and where it is: in stock, sold, or cancelled. Filter
+  by design or status to see what is left on the floor.
+
+
+REPORTS
+
+  Pick a date range and Run report. You get pieces sold, sales totals, a
+  breakdown by design, and a breakdown by party. Download CSV saves it to open
+  in Excel.
+
+
+────────────────────────────────────────────────────────────────────
+PART 3 — BACKUP (optional but recommended)
+────────────────────────────────────────────────────────────────────
+
+The app can copy each day's bills into a Google Sheet automatically at midnight.
+To switch it on you add three more values in Render's Environment section:
+
+    GOOGLE_CLIENT_EMAIL     from a Google service account
+    GOOGLE_PRIVATE_KEY      from the same service account
+    GOOGLE_SHEET_ID         the id of a Google Sheet you share with that account
+
+Setting up a service account is a Google Cloud task. If that is more than you
+want to handle, skip it. The Reports screen lets you download a CSV any time, and
+that is a perfectly good manual backup.
+
+On Render's free plan the app sleeps when idle, so the midnight backup only runs
+if the app happens to be awake. Until you move to a paid plan, treat the CSV
+download as your real backup.
+
+
+────────────────────────────────────────────────────────────────────
+GOOD TO KNOW
+────────────────────────────────────────────────────────────────────
+
+  - The free Render plan sleeps after about 15 minutes of no use. The next visit
+    takes up to a minute to wake. Paid plans stay awake, about 7 dollars a month.
+
+  - Your staff stay signed in across sleeps and restarts, they will not have to
+    log in over and over.
+
+  - Never use Render's own free database, it deletes itself after 30 days. Always
+    use Neon as described. Neon's free database is permanent.
+
+  - The camera only works on a secure web address (https). Render and your custom
+    domain both provide that, so it works in the browser with no app to install.
+    On iPhone use Safari, on Android use Chrome, and allow the camera when asked.
+
+  - To change the sign-in password, edit APP_PASSWORD in Render and let it
+    redeploy.
