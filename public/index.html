@@ -382,8 +382,6 @@ th:last-child,td:last-child{padding-right:4px}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><path d="M14 14h2v2M18 18h2M14 18v2M18 14v0" stroke-linecap="round"/></svg>Print label</button>
     <button class="nav-item" data-p="counter" onclick="go('counter')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" stroke-linecap="round"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Scan</button>
-    <button class="nav-item" data-p="manual" onclick="go('manual')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z" stroke-linejoin="round"/></svg>Order form</button>
 
     <div class="nav-group">Manage</div>
 
@@ -411,7 +409,7 @@ th:last-child,td:last-child{padding-right:4px}
 
       <!-- ─── SCAN / ORDER BUILDER ─── -->
       <section class="page" id="p-counter">
-        <div class="phead"><h1 class="ptitle">Order form</h1><div class="psub">Scan a design QR to add lines, or type a design name. Fill party details and save.</div></div>
+        <div class="phead"><h1 class="ptitle">Order form</h1><div class="psub">Scan design after design without stopping — the camera keeps going. Fill in sets for each afterward, then save.</div></div>
         <div id="counter-msg"></div>
 
         <!-- Scan bar -->
@@ -500,57 +498,7 @@ th:last-child,td:last-child{padding-right:4px}
         </div></div>
       </section>
 
-      <!-- ─── ORDER FORM (manual, typed) ─── -->
-      <section class="page" id="p-manual">
-        <div class="phead"><h1 class="ptitle">Order form</h1><div class="psub">Scan a QR to fill design lines automatically, or type by hand. Prints a docket. Does not touch stock.</div></div>
-        <div id="mn-msg"></div>
-
-        <div class="card"><div class="card-b" style="display:flex;align-items:center;gap:10px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:20px;flex-shrink:0;color:var(--muted)"><path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" stroke-linecap="round"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
-          <input type="text" id="mn-scan-in" placeholder="Scan a QR code or type item code here, then press Enter" autocomplete="off" style="flex:1"
-            onkeydown="if(event.key==='Enter'){mnScan();event.preventDefault()}">
-          <button class="b b-out" onclick="mnScan()">Fill line</button>
-          <div id="mn-scan-msg" style="font-size:12.5px;color:var(--muted);min-width:140px"></div>
-        </div></div>
-        <div class="card"><div class="card-b">
-          <div class="card-h"><div><div class="card-t">Party</div><div class="card-d">Who the order is for</div></div></div>
-          <div class="f"><label for="mn-party">Party name <span class="req">*</span></label>
-            <input type="text" id="mn-party" list="dl-mn-party" autocomplete="off" placeholder="Shop or buyer name" oninput="onMnParty()"><datalist id="dl-mn-party"></datalist></div>
-          <div class="g2">
-            <div class="f"><label for="mn-mobile">Mobile <span class="req">*</span></label><input type="tel" id="mn-mobile" inputmode="numeric"></div>
-            <div class="f"><label for="mn-gst">GST no</label><input type="text" id="mn-gst" style="text-transform:uppercase"></div>
-          </div>
-          <div class="f"><label for="mn-addr">Address</label><input type="text" id="mn-addr"></div>
-          <div class="g2">
-            <div class="f"><label for="mn-contact">Contact person</label><input type="text" id="mn-contact"></div>
-            <div class="f"><label for="mn-transport">Transport</label><input type="text" id="mn-transport"></div>
-          </div>
-          <div class="g2">
-            <div class="f"><label for="mn-agent">Agent</label><input type="text" id="mn-agent" list="dl-mn-agent" autocomplete="off"><datalist id="dl-mn-agent"></datalist></div>
-            <div class="f"><label for="mn-agentaddr">Agent address</label><input type="text" id="mn-agentaddr"></div>
-          </div>
-        </div></div>
-
-        <div class="card"><div class="card-b">
-          <div class="card-h"><div><div class="card-t">Design lines</div><div class="card-d">What they are ordering</div></div>
-            <button class="b b-out b-sm" onclick="mnAddRow()">+ Add line</button></div>
-          <div class="tw"><table><thead><tr>
-            <th style="min-width:150px">Design <span class="req">*</span></th><th style="width:90px">Qty</th>
-            <th style="width:110px">Rate (₹)</th><th>Remarks</th><th style="width:40px"></th>
-          </tr></thead><tbody id="mn-rows"></tbody></table></div>
-        </div></div>
-
-        <div class="card"><div class="card-b">
-          <div class="g2">
-            <div class="f"><label for="mn-mqty">Total quantity</label><input type="text" id="mn-mqty" placeholder="e.g. 250"></div>
-            <div class="f"><label for="mn-mrem">Order remarks</label><input type="text" id="mn-mrem" placeholder="e.g. before Rakhi"></div>
-          </div>
-          <div class="bar" style="margin-top:4px">
-            <button class="b b-ink b-big" id="mn-btn" onclick="reviewManual()">Review &amp; save order</button>
-            <button class="b b-out" onclick="resetManual()">Clear</button>
-          </div>
-        </div></div>
-      </section>
+      <!-- ─── STOCK (removed) placeholder anchor kept below ─── -->
 
       <!-- ─── STOCK ─── -->
       <section class="page" id="p-stock">
@@ -668,8 +616,8 @@ th:last-child,td:last-child{padding-right:4px}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/></svg>Generate</button>
     <button data-p="counter" onclick="go('counter')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" stroke-linecap="round"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Scan</button>
-    <button data-p="manual" onclick="go('manual')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z" stroke-linejoin="round"/></svg>Order form</button>
+    <button data-p="orders" onclick="go('orders')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4" stroke-linecap="round"/></svg>Orders</button>
     <button onclick="openMenu()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>More</button>
   </nav>
@@ -690,24 +638,6 @@ th:last-child,td:last-child{padding-right:4px}
 </div>
 
 <!-- ═══════════ MODALS ═══════════ -->
-<div class="modal" id="m-checkout"><div class="mbox">
-  <div class="mtitle">Save order form</div>
-  <div class="mdesc" id="co-desc">Customer details are optional. Fill them in only for a proper bill.</div>
-  <div class="f"><label for="co-party">Party name</label>
-    <input type="text" id="co-party" list="dl-party" autocomplete="off" placeholder="Leave blank for a quick bill" oninput="onCoParty()"><datalist id="dl-party"></datalist></div>
-  <div class="g2">
-    <div class="f"><label for="co-mobile">Mobile</label><input type="tel" id="co-mobile" inputmode="numeric"></div>
-    <div class="f"><label for="co-gst">GST no</label><input type="text" id="co-gst" style="text-transform:uppercase"></div>
-  </div>
-  <div class="f"><label for="co-transport">Transport</label><input type="text" id="co-transport"></div>
-  <div class="f"><label for="co-remarks">Remarks</label><input type="text" id="co-remarks"></div>
-  <div class="bar" style="margin-top:4px">
-    <button class="b b-gold" id="co-btn" onclick="checkout()">Save order form</button>
-    <button class="b b-out" onclick="shut('m-checkout')">Back</button>
-  </div>
-  <div class="mmsg" id="co-msg"></div>
-</div></div>
-
 <div class="modal" id="m-cancel"><div class="mbox">
   <div class="mtitle" id="cn-title">Cancel order form</div>
   <div class="mdesc" id="cn-desc">This cancels the order form. Enter the admin PIN.</div>
@@ -731,28 +661,6 @@ th:last-child,td:last-child{padding-right:4px}
 </div></div>
 
 <!-- ═══════════ QTY PROMPT ═══════════ -->
-<div class="modal" id="m-qty"><div class="mbox" style="max-width:420px">
-  <div class="mtitle" id="qp-name" style="font-size:18px">Design name</div>
-  <div class="mdesc">How many sets is the party ordering?</div>
-  <div class="g2" style="margin-top:16px">
-    <div class="f"><label for="qp-qty">Sets <span class="req">*</span></label>
-      <input type="number" id="qp-qty" inputmode="numeric" min="1" placeholder="e.g. 50"
-        style="font-size:22px;text-align:center;font-weight:700"
-        onkeydown="if(event.key==='Enter')confirmQty()"></div>
-    <div class="f"><label for="qp-rate">Rate (₹)</label>
-      <input type="text" id="qp-rate" inputmode="numeric" placeholder="auto-filled"
-        style="text-align:right" onkeydown="if(event.key==='Enter')confirmQty()"></div>
-  </div>
-  <div class="f" style="margin-top:8px"><label for="qp-remarks">Remarks</label>
-    <input type="text" id="qp-remarks" placeholder="colour, note (optional)"
-      onkeydown="if(event.key==='Enter')confirmQty()"></div>
-  <div class="bar" style="margin-top:16px">
-    <button class="b b-ink b-big" onclick="confirmQty()">Add to order</button>
-    <button class="b b-out" onclick="shut('m-qty')">Cancel</button>
-  </div>
-  <div class="mmsg" id="qp-msg"></div>
-</div></div>
-
 <div class="cam" id="cam">
   <div class="cam-live">Scanned: <b id="cam-count">0</b></div>
   <div class="cam-f" id="cam-f"><video id="cam-video" playsinline muted></video></div>
@@ -821,7 +729,6 @@ function go(p){
   window.scrollTo(0,0);
   if(p==='generate'){loadGenDesignList();drawGenPreview();}
   if(p==='counter')setTimeout(()=>{const s=$('scan-in');if(s)s.focus()},50);
-  if(p==='manual')startManual();
   if(p==='stock')loadStock();
   if(p==='orders')loadOrders();
   if(p==='designs'){drawDesigns();loadParties();loadAgents()}
@@ -861,139 +768,7 @@ function fillDesignData(){
   const dlp=$('dl-design-plain');if(dlp)dlp.innerHTML=opts;
 }
 async function loadPartiesQuiet(){const p=await api('GET','/api/parties');parties=p.parties||[];
-  $('dl-party').innerHTML=parties.map(x=>'<option value="'+esc(x.name)+'">').join('');
-  const mp=$('dl-mn-party');if(mp)mp.innerHTML=parties.map(x=>'<option value="'+esc(x.name)+'">').join('')}
-
-/* ═══════════ ORDER FORM (manual, typed) ═══════════ */
-async function startManual(){
-  // datalists for design + party + agent
-  $('dl-mn-party').innerHTML=parties.map(x=>'<option value="'+esc(x.name)+'">').join('');
-  if(!agents.length){const r=await api('GET','/api/agents');agents=r.agents||[]}
-  const ad=$('dl-mn-agent');if(ad)ad.innerHTML=agents.map(a=>'<option value="'+esc(a.name)+'">').join('');
-  if(!$('mn-rows').children.length){mnAddRow();mnAddRow();mnAddRow()}
-  $('mn-scan-in')&&$('mn-scan-in').focus();
-}
-async function mnScan(){
-  const code=v('mn-scan-in').trim();
-  if(!code)return;
-  const sm=$('mn-scan-msg');sm.textContent='Looking up…';sm.style.color='var(--muted)';
-  const r=await api('POST','/api/scan',{code});
-  $('mn-scan-in').value='';
-  if(r.item){
-    const it=r.item;
-    // find the first blank design row and fill it; if all full, add a new one
-    const rows=[...$('mn-rows').querySelectorAll('tr')];
-    let target=rows.find(tr=>!tr.querySelector('.mn-d').value.trim());
-    if(!target){mnAddRow();target=$('mn-rows').querySelector('tr:last-child')}
-    target.querySelector('.mn-d').value=it.design;
-    target.querySelector('.mn-r').value=money(it.rate)||'';
-    sm.textContent='Filled: '+it.design+' @ '+rupee(it.rate);sm.style.color='var(--ok)';
-    setTimeout(()=>{sm.textContent=''},3000);
-    // offer to focus party if it's blank
-    if(!v('mn-party'))$('mn-party').focus();
-    return;
-  }
-  if(r.status==='order'){sm.textContent='That QR is a bill, not an item.';sm.style.color='var(--cancel)'}
-  else{sm.textContent=r.message||r.error||'Not found.';sm.style.color='var(--cancel)'}
-  setTimeout(()=>{sm.textContent=''},4000);
-}
-function mnRowHtml(){
-  return '<tr>'+
-    '<td><input type="text" class="mn-d" list="dl-design" autocomplete="off" placeholder="Design" oninput="mnDesignFill(this)"></td>'+
-    '<td><input type="text" class="mn-q" inputmode="numeric" placeholder="0"></td>'+
-    '<td><input type="text" class="mn-r" inputmode="numeric" placeholder="rate"></td>'+
-    '<td><input type="text" class="mn-rem" placeholder="colour, note"></td>'+
-    '<td><button class="rowx" onclick="mnDelRow(this)" title="Remove">&times;</button></td>'+
-  '</tr>';
-}
-function mnAddRow(){const tb=$('mn-rows');tb.insertAdjacentHTML('beforeend',mnRowHtml())}
-function mnDelRow(btn){const tr=btn.closest('tr');const tb=$('mn-rows');if(tb.children.length>1)tr.remove();else{tr.querySelectorAll('input').forEach(i=>i.value='')}}
-function mnDesignFill(inp){
-  // autofill rate from the design master if the row's rate is blank
-  const tr=inp.closest('tr');const rEl=tr.querySelector('.mn-r');
-  const hit=designs.find(d=>d.name.toLowerCase()===inp.value.trim().toLowerCase());
-  if(hit&&money(hit.default_rate)>0&&!rEl.value)rEl.value=money(hit.default_rate);
-}
-function onMnParty(){
-  const hit=parties.find(x=>x.name.toLowerCase()===v('mn-party').toLowerCase());
-  if(!hit)return;
-  const set=(id,val)=>{if(!v(id))$(id).value=val||''};
-  set('mn-mobile',hit.mobile);set('mn-gst',hit.gst_no);set('mn-addr',hit.address);
-  set('mn-contact',hit.contact_person);set('mn-transport',hit.transport);
-  set('mn-agent',hit.agent_name);set('mn-agentaddr',hit.agent_address);
-}
-function mnCollect(){
-  const lines=[];
-  $('mn-rows').querySelectorAll('tr').forEach(tr=>{
-    const design=tr.querySelector('.mn-d').value.trim();
-    if(!design)return;
-    lines.push({design,
-      qty:tr.querySelector('.mn-q').value.trim(),
-      rate:money(tr.querySelector('.mn-r').value),
-      remarks:tr.querySelector('.mn-rem').value.trim()});
-  });
-  return lines;
-}
-let _mnParty=null,_mnLines=null,_mnMqty='',_mnRem='';
-function reviewManual(){
-  const party={partyName:v('mn-party'),mobile:v('mn-mobile'),gstNo:v('mn-gst'),address:v('mn-addr'),
-    contactPerson:v('mn-contact'),transport:v('mn-transport'),agentName:v('mn-agent'),agentAddress:v('mn-agentaddr')};
-  const lines=mnCollect();
-  if(!party.partyName){msg('mn-msg','err','Enter the party name.',5000);$('mn-party').focus();return}
-  if(!party.mobile){msg('mn-msg','err','Enter a mobile number.',5000);$('mn-mobile').focus();return}
-  if(!lines.length){msg('mn-msg','err','Add at least one design line.',5000);return}
-  _mnParty=party;_mnLines=lines;_mnMqty=v('mn-mqty');_mnRem=v('mn-mrem');
-  // Build preview HTML
-  const lineRows=lines.map((l,i)=>'<tr><td style="color:var(--muted);padding:4px 8px">'+(i+1)+'</td>'+
-    '<td style="font-weight:500;padding:4px 8px">'+esc(l.design)+'</td>'+
-    '<td style="padding:4px 8px;color:var(--muted)">'+esc(l.qty||'—')+'</td>'+
-    '<td style="padding:4px 8px;font-family:var(--mono)">'+(l.rate>0?rupee(l.rate):'—')+'</td>'+
-    '<td style="padding:4px 8px;color:var(--muted)">'+esc(l.remarks||'')+'</td></tr>').join('');
-  $('review-body').innerHTML=
-    '<div style="margin-bottom:12px"><b>'+esc(party.partyName)+'</b>'+
-      (party.mobile?' · '+esc(party.mobile):'')+
-      (party.gstNo?' · GST '+esc(party.gstNo.toUpperCase()):'')+
-      (party.address?'<br><span style="color:var(--muted)">'+esc(party.address)+'</span>':'')+
-      (party.transport?'<br><span style="color:var(--muted)">Transport: '+esc(party.transport)+'</span>':'')+
-      (party.agentName?'<br><span style="color:var(--muted)">Agent: '+esc(party.agentName)+'</span>':'')+
-    '</div>'+
-    '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>'+
-      '<th style="padding:4px 8px;text-align:left;border-bottom:1px solid var(--line);color:var(--muted);font-weight:500">#</th>'+
-      '<th style="padding:4px 8px;text-align:left;border-bottom:1px solid var(--line)">Design</th>'+
-      '<th style="padding:4px 8px;border-bottom:1px solid var(--line)">Qty</th>'+
-      '<th style="padding:4px 8px;border-bottom:1px solid var(--line)">Rate</th>'+
-      '<th style="padding:4px 8px;border-bottom:1px solid var(--line)">Remarks</th>'+
-    '</tr></thead><tbody>'+lineRows+'</tbody></table>'+
-    (_mnMqty?'<div style="margin-top:10px;font-size:13px"><b>Total qty:</b> '+esc(_mnMqty)+'</div>':'')+
-    (_mnRem?'<div style="font-size:13px;color:var(--muted)"><b>Remarks:</b> '+esc(_mnRem)+'</div>':'');
-  $('review-msg').textContent='';
-  open_('m-review');
-}
-async function confirmManual(){
-  if(!_mnParty||!_mnLines){shut('m-review');return}
-  $('review-save-btn').disabled=true;
-  const r=await api('POST','/api/orders/manual',{party:_mnParty,lines:_mnLines,masterQty:_mnMqty,remarks:_mnRem});
-  $('review-save-btn').disabled=false;
-  if(r.error){const m=$('review-msg');m.style.color='var(--cancel)';m.textContent=r.error;return}
-  shut('m-review');
-  msg('mn-msg','ok','Order '+r.orderNo+' saved. Tap Print to get the docket.',8000);
-  // Show a Print docket button inline in the message area
-  const printBtn=document.createElement('button');
-  printBtn.className='b b-gold b-sm';printBtn.style.marginLeft='12px';
-  printBtn.textContent='Print docket';
-  printBtn.onclick=async()=>{
-    const full=await api('GET','/api/orders/'+encodeURIComponent(r.orderNo));
-    if(full.order)printOrderDocket(full.order,full.lines||[]);
-  };
-  const msgEl=$('mn-msg');if(msgEl)msgEl.appendChild(printBtn);
-  loadPartiesQuiet();
-  resetManual();
-  _mnParty=null;_mnLines=null;
-}
-function resetManual(){
-  ['mn-party','mn-mobile','mn-gst','mn-addr','mn-contact','mn-transport','mn-agent','mn-agentaddr','mn-mqty','mn-mrem'].forEach(id=>{if($(id))$(id).value=''});
-  $('mn-rows').innerHTML='';mnAddRow();mnAddRow();mnAddRow();
-}
+  $('dl-party').innerHTML=parties.map(x=>'<option value="'+esc(x.name)+'">').join('')}
 
 /* ═══════════ GENERATE QR ═══════════ */
 function onGenDesign(){
@@ -1068,25 +843,55 @@ function inCart(){return false} // no longer meaningful but keeps camera code ha
 function addToCart(){return false}
 function cartTotal(){return 0}
 
+// Called on every scan/type hit. Adds the design as a line with sets left
+// blank — filling sets happens afterward, in one pass, not mid-scan. Returns
+// false (and does nothing) if that design is already a line, so scanning the
+// same label twice in a row is harmless.
+function addDesignToCart(design){
+  if(lineIdx(design.name)>=0)return false;
+  cart.push({design:design.name,qty:'',rate:money(design.default_rate)||'',remarks:''});
+  drawCart();
+  return true;
+}
+function updateLine(i,field,val){if(cart[i])cart[i][field]=val}
+
 function drawCart(){
   const list=$('cart-list'),foot=$('cart-foot');
   const cc=$('cart-count');if(cc)cc.textContent=cart.length+(cart.length===1?' line':' lines');
   if(!cart.length){
     list.innerHTML='<div class="cart-empty">'+ico('box').replace('viewBox','class="_" viewBox')+
-      '<div>Scan a design QR or type a name to add lines</div></div>';
-    if(foot)foot.style.display='none';return;
+      '<div>Scan a design QR or type a name to start</div></div>';
+    if(foot)foot.style.display='none';
+    const db0=$('cam-done-btn');if(db0)db0.textContent='Done';
+    return;
   }
-  list.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+
-    '<th style="text-align:left;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Design</th>'+
-    '<th style="width:70px;text-align:center;padding:8px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Sets</th>'+
-    '<th style="width:90px;text-align:right;padding:8px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Rate</th>'+
+  const missing=cart.filter(function(c){return !String(c.qty).trim()}).length;
+  list.innerHTML=
+    (missing?'<div class="al al-warn" style="margin-bottom:10px">'+ico('warn')+
+      '<span>'+missing+' design'+(missing===1?'':'s')+' still '+(missing===1?'needs':'need')+' sets filled in before you can save.</span></div>':'')+
+    '<table style="width:100%;border-collapse:collapse"><thead><tr>'+
+    '<th style="text-align:left;padding:8px 10px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Design</th>'+
+    '<th style="width:78px;text-align:center;padding:8px 4px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Sets</th>'+
+    '<th style="width:88px;text-align:center;padding:8px 4px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Rate</th>'+
+    '<th style="text-align:left;padding:8px 4px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">Remarks</th>'+
     '<th style="width:36px;border-bottom:1px solid var(--line)"></th></tr></thead><tbody>'+
-    cart.map((c,i)=>'<tr><td style="padding:10px 12px;font-weight:500">'+esc(c.design)+
-      (c.remarks?'<div style="font-size:12px;color:var(--muted)">'+esc(c.remarks)+'</div>':'')+
-      '</td><td style="text-align:center;font-family:var(--mono);font-size:15px;font-weight:600">'+esc(c.qty)+
-      '</td><td style="text-align:right;font-family:var(--mono);color:var(--muted)">'+
-      (money(c.rate)>0?rupee(c.rate):'')+
-      '</td><td style="text-align:center"><button class="rowx" onclick="removeFromCart('+i+')">&times;</button></td></tr>').join('')+
+    cart.map(function(c,i){
+      const needsQty=!String(c.qty).trim();
+      return '<tr>'+
+        '<td style="padding:8px 10px;font-weight:500;vertical-align:middle">'+esc(c.design)+'</td>'+
+        '<td style="padding:6px 4px"><input type="text" inputmode="numeric" value="'+esc(c.qty)+'" placeholder="?" '+
+          'id="ln-qty-'+i+'" oninput="updateLine('+i+',\'qty\',this.value)" '+
+          'style="width:100%;height:36px;text-align:center;font-family:var(--mono);font-weight:700;font-size:15px;'+
+          'border:1.5px solid '+(needsQty?'var(--gold-2)':'var(--line)')+';border-radius:8px;background:'+(needsQty?'var(--gold-tint)':'var(--card)')+'"></td>'+
+        '<td style="padding:6px 4px"><input type="text" inputmode="numeric" value="'+esc(c.rate)+'" placeholder="₹" '+
+          'oninput="updateLine('+i+',\'rate\',this.value)" '+
+          'style="width:100%;height:36px;text-align:center;font-family:var(--mono);border:1px solid var(--line);border-radius:8px"></td>'+
+        '<td style="padding:6px 4px"><input type="text" value="'+esc(c.remarks)+'" placeholder="colour, note" '+
+          'oninput="updateLine('+i+',\'remarks\',this.value)" '+
+          'style="width:100%;height:36px;border:1px solid var(--line);border-radius:8px;padding:0 8px"></td>'+
+        '<td style="text-align:center"><button class="rowx" onclick="removeFromCart('+i+')">&times;</button></td>'+
+      '</tr>';
+    }).join('')+
     '</tbody></table>';
   if(foot)foot.style.display='';
   const db=$('cam-done-btn');if(db)db.textContent='Done ('+cart.length+(cart.length===1?' line':' lines')+')';
@@ -1096,43 +901,34 @@ async function typeScan(){
   const code=v('scan-in');if(!code)return;
   $('scan-in').value='';
   const r=await api('POST','/api/scan',{code});
-  if(r.status==='design'){openQtyPrompt(r.design);$('scan-in').focus();return}
+  if(r.status==='design'){
+    const added=addDesignToCart(r.design);
+    msg('counter-msg',added?'ok':'warn',esc(r.design.name)+(added?' added.':' is already on the list.'),2500);
+    $('scan-in').focus();return;
+  }
   if(r.status==='order'){openOrder(r.orderNo);return}
-  // treat as a typed design name
   const name=code.trim();
-  const d=designs.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  openQtyPrompt(d||{name,default_rate:0});
+  const d=designs.find(function(x){return x.name.toLowerCase()===name.toLowerCase()});
+  const design=d||{name:name,default_rate:0};
+  const added=addDesignToCart(design);
+  msg('counter-msg',added?'ok':'warn',esc(design.name)+(added?' added.':' is already on the list.'),2500);
   $('scan-in').focus();
 }
 async function handleScan(r){
-  if(r.status==='design')openQtyPrompt(r.design);
+  // Legacy hook kept for compatibility — camHit() is what the live camera
+  // actually calls, since it decides whether to keep scanning afterward.
+  if(r.status==='design')addDesignToCart(r.design);
   else if(r.status==='order'){closeCam();openOrder(r.orderNo)}
 }
-
-/* ═══════════ QTY PROMPT MODAL ═══════════ */
-let _qtyDesign=null;
-function openQtyPrompt(design){
-  _qtyDesign=design;
-  $('qp-name').textContent=design.name;
-  $('qp-rate').value=money(design.default_rate)>0?money(design.default_rate):'';
-  $('qp-qty').value='';$('qp-remarks').value='';$('qp-msg').textContent='';
-  open_('m-qty');
-  setTimeout(()=>$('qp-qty').focus(),120);
-}
-function confirmQty(){
-  if(!_qtyDesign){shut('m-qty');return}
-  const qty=v('qp-qty');
-  if(!qty||isNaN(parseInt(qty))||parseInt(qty)<1){$('qp-msg').textContent='Enter the number of sets.';return}
-  const existing=lineIdx(_qtyDesign.name);
-  const line={design:_qtyDesign.name,qty:qty.trim(),rate:money(v('qp-rate')),remarks:v('qp-remarks').trim()};
-  if(existing>=0)cart[existing]=line;else cart.push(line);
-  shut('m-qty');drawCart();
-  msg('counter-msg','ok',esc(_qtyDesign.name)+' — '+qty+' sets.',3000);
-}
-
 /* ═══════════ SAVE ORDER FORM ═══════════ */
 function openCheckout(){
   if(!cart.length){msg('counter-msg','warn','Add at least one design line first.',4000);return}
+  const missingIdx=cart.findIndex(function(c){return !String(c.qty).trim()||parseInt(c.qty)<1});
+  if(missingIdx>=0){
+    msg('counter-msg','warn','Fill in sets for every design before saving.',4500);
+    const el=$('ln-qty-'+missingIdx);if(el){el.focus();if(el.scrollIntoView)el.scrollIntoView({block:'center',behavior:'smooth'})}
+    return;
+  }
   if(!v('co-party')){$('co-party').focus();msg('counter-msg','warn','Enter the party name.',4000);return}
   if(!v('co-mobile')){$('co-mobile').focus();msg('counter-msg','warn','Enter a mobile number.',4000);return}
   const rows=cart.map((c,i)=>'<tr><td style="padding:4px 8px;color:var(--muted)">'+(i+1)+'</td>'+
@@ -1164,26 +960,21 @@ function onCoParty(){
   if(!v('co-transport'))$('co-transport').value=hit.transport||'';
 }
 async function confirmManual(){
-  const lines=cart.length?cart:(_mnLines||[]);
   const party={
-    partyName:v('co-party')||v('mn-party'),mobile:v('co-mobile')||v('mn-mobile'),
-    gstNo:(v('co-gst')||v('mn-gst')).toUpperCase(),transport:v('co-transport')||v('mn-transport'),
-    address:v('co-addr')||v('mn-addr')||'',contactPerson:v('co-contact')||v('mn-contact')||'',
-    agentName:v('co-agent')||v('mn-agent')||'',agentAddress:v('co-agentaddr')||v('mn-agentaddr')||''
+    partyName:v('co-party'),mobile:v('co-mobile'),
+    gstNo:v('co-gst').toUpperCase(),transport:v('co-transport')
   };
-  const remarks=v('co-remarks')||v('mn-mrem')||'';
+  const remarks=v('co-remarks');
   $('review-save-btn').disabled=true;
-  const r=await api('POST','/api/orders',{party,lines,remarks});
+  const r=await api('POST','/api/orders',{party,lines:cart,remarks});
   $('review-save-btn').disabled=false;
   if(!r.ok&&r.error){const m=$('review-msg');m.style.color='var(--cancel)';m.textContent=r.error;return}
   shut('m-review');
   cart=[];drawCart();
   ['co-party','co-mobile','co-gst','co-transport','co-remarks'].forEach(id=>{const e=$(id);if(e)e.value=''});
-  _mnParty=null;_mnLines=null;
   stats();
   openOrder(r.orderNo);
 }
-async function checkout(){await confirmManual()}
 
 /* ═══════════ CAMERA (continuous scanning) ═══════════ */
 let stream=null,tick=null,cv=null,cx=null,lastCode='',lastAt=0;
@@ -1238,7 +1029,7 @@ async function openCam(){
     const vd=$('cam-video');vd.srcObject=stream;
     await vd.play().catch(()=>{});
     cv=document.createElement('canvas');cx=cv.getContext('2d',{willReadFrequently:true});
-    $('cam-t').textContent='Point camera at a design label';
+    $('cam-t').textContent='Point at a label — it stays open, keep scanning';
     tick=setInterval(frame,200);
   }catch(e){
     $('cam-t').style.color='#F87171';
@@ -1293,12 +1084,27 @@ async function camHit(raw){
   const nowT=Date.now();
   if(raw===lastCode&&nowT-lastAt<2500)return;
   lastCode=raw;lastAt=nowT;
-  camDiag('read: '+String(raw).slice(0,60),'#34D399');
   const r=await api('POST','/api/scan',{code:raw});
-  if(r.status==='design'){closeCam();openQtyPrompt(r.design);return}
-  if(r.status==='order'){closeCam();openOrder(r.orderNo);return}
-  if(r.status==='ok'){closeCam();openQtyPrompt({name:r.item.design,default_rate:money(r.item.rate)});return}
-  // Unknown code — show what was actually read so the cause is obvious
+  if(r.status==='order'){
+    // A saved order's own QR, not a design label — this exits scanning
+    // entirely since opening a past order is a different action.
+    closeCam();openOrder(r.orderNo);return;
+  }
+  const design = r.status==='design' ? r.design
+    : r.status==='ok' ? {name:r.item.design,default_rate:money(r.item.rate)}
+    : null;
+  if(design){
+    const added=addDesignToCart(design);
+    if(added){
+      $('cam-t').style.color='#34D399';$('cam-t').textContent='Added: '+design.name;
+      camDiag('added \u2014 keep scanning or tap Done','#34D399');
+    }else{
+      $('cam-t').style.color='#FBBF24';$('cam-t').textContent='Already on the list: '+design.name;
+      camDiag('already added \u2014 keep scanning or tap Done','#FBBF24');
+    }
+    $('cam-count').textContent=cart.length;
+    return; // camera stays open — no reopen delay for the next design
+  }
   $('cam-t').style.color='#F87171';
   $('cam-t').textContent='Not a design label.';
   camDiag('QR said: '+String(raw).slice(0,80),'#F87171');
@@ -1699,7 +1505,7 @@ ${o.remarks?'<div class="remarks-block"><b>Remarks:</b> '+esc(o.remarks)+'</div>
 }
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
   if($('cam').classList.contains('on'))closeCam();
-  ['m-checkout','m-cancel','m-qty','menu'].forEach(i=>{const el=$(i);if(el&&el.classList.contains('on'))shut(i)})});
+  ['m-review','m-cancel','menu'].forEach(i=>{const el=$(i);if(el&&el.classList.contains('on'))shut(i)})});
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on')}));
 </script>
 </body>
