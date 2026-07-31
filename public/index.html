@@ -1182,25 +1182,26 @@ function frame(){
 }
 async function camHit(raw){
   const nowT=Date.now();
-  // Debounce: ignore the same code within 2.5s so one piece isn't scanned 10 times
   if(raw===lastCode&&nowT-lastAt<2500)return;
   lastCode=raw;lastAt=nowT;
   const r=await api('POST','/api/scan',{code:raw});
   const f=$('cam-f');
-  if(r.status==='ok'){
-    if(inCart(r.item.item_code)){
-      f.classList.add('dup');setTimeout(()=>f.classList.remove('dup'),350);
-      $('cam-t').style.color='#FBBF24';$('cam-t').textContent='Already scanned';return;
-    }
-    // new model: scan opens qty prompt, close camera first
+  if(r.status==='design'){
+    // Close camera and open the qty prompt for this design
     closeCam();
-    $('cam-r').textContent=r.item?r.item.design||r.design?.name||'':'';
-    openQtyPrompt(r.item||r.design||{name:raw,default_rate:0});
+    openQtyPrompt(r.design);
     return;
   }
-  if(r.status==='sold'){$('cam-t').style.color='#F87171';$('cam-t').textContent='Already sold, cannot add.';return}
-  if(r.status==='order'){$('cam-t').style.color='#fff';$('cam-t').textContent='That is a bill QR, not a piece.';return}
-  $('cam-t').style.color='#F87171';$('cam-t').textContent='No piece found for that code.';
+  if(r.status==='order'){closeCam();openOrder(r.orderNo);return}
+  if(r.status==='ok'){
+    // Legacy item-based QR (old labels) — treat it as a design scan
+    closeCam();
+    openQtyPrompt({name:r.item.design,default_rate:money(r.item.rate)});
+    return;
+  }
+  // Unknown code — try treating the raw value as a design name
+  $('cam-t').style.color='#F87171';
+  $('cam-t').textContent='Design not found. Try typing the name instead.';
 }
 function closeCam(){
   if(tick){clearInterval(tick);tick=null}
