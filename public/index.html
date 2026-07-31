@@ -741,6 +741,7 @@ th:last-child,td:last-child{padding-right:4px}
   <div class="cam-f" id="cam-f"><video id="cam-video" playsinline muted></video></div>
   <div class="cam-t" id="cam-t"></div>
   <div class="cam-r" id="cam-r"></div>
+  <div id="cam-diag" style="text-align:center;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.55);padding:0 16px;word-break:break-all;min-height:16px"></div>
   <button class="cam-done" id="cam-done-btn" onclick="closeCam()">Done</button>
 </div>
 
@@ -1153,10 +1154,29 @@ async function checkout(){await confirmManual()}
 
 /* ═══════════ CAMERA (continuous scanning) ═══════════ */
 let stream=null,tick=null,cv=null,cx=null,lastCode='',lastAt=0;
-(function(){if(typeof jsQR!=='undefined')return;
-  const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js';
-  s.onerror=function(){const b=document.createElement('script');b.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';document.head.appendChild(b)};
-  document.head.appendChild(s)})();
+let detector=null,scanEngine='',frameCount=0,decodeErr='';
+
+// Load jsQR as a fallback for browsers without native BarcodeDetector.
+let jsqrState='loading';
+(function(){
+  if(typeof jsQR!=='undefined'){jsqrState='ready';return}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js';
+  s.onload=function(){jsqrState='ready'};
+  s.onerror=function(){
+    const b=document.createElement('script');
+    b.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    b.onload=function(){jsqrState='ready'};
+    b.onerror=function(){jsqrState='failed'};
+    document.head.appendChild(b);
+  };
+  document.head.appendChild(s);
+})();
+
+function camDiag(txt,color){
+  const d=$('cam-diag');
+  if(d){d.textContent=txt;d.style.color=color||'rgba(255,255,255,.55)'}
+}
 
 async function openCam(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
@@ -1164,13 +1184,25 @@ async function openCam(){
   $('cam').classList.add('on');$('cam-r').textContent='';$('cam-count').textContent=cart.length;
   const db=$('cam-done-btn');if(db)db.textContent='Done';
   $('cam-t').style.color='#fff';$('cam-t').textContent='Starting camera…';
+  frameCount=0;decodeErr='';
+
+  // Pick a scan engine. Native is much better at reading QR off a screen or paper.
+  detector=null;scanEngine='';
   try{
-    // Always request a fresh stream — keeping the old one causes iOS to silently
-    // stop decoding frames after the first closeCam call.
+    if('BarcodeDetector' in window){
+      const formats=await window.BarcodeDetector.getSupportedFormats();
+      if(formats.includes('qr_code')){
+        detector=new window.BarcodeDetector({formats:['qr_code']});
+        scanEngine='native';
+      }
+    }
+  }catch(e){detector=null}
+  if(!detector) scanEngine = (typeof jsQR!=='undefined') ? 'jsqr' : 'none';
+
+  try{
     if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
     stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
     const vd=$('cam-video');vd.srcObject=stream;
-    // iOS requires both play() and the playsInline attribute (set in HTML)
     await vd.play().catch(()=>{});
     cv=document.createElement('canvas');cx=cv.getContext('2d',{willReadFrequently:true});
     $('cam-t').textContent='Point camera at a design label';
@@ -1181,41 +1213,63 @@ async function openCam(){
       :e.name==='NotFoundError'?'No camera found on this device.':'Camera could not start: '+e.message;
   }
 }
-function frame(){
+
+async function frame(){
   const vd=$('cam-video');
-  // readyState>=2 means we have at least the current frame — iOS often stays below 4
-  if(!vd||vd.readyState<2||!cv||typeof jsQR==='undefined')return;
-  const w=vd.videoWidth,h=vd.videoHeight;if(!w||!h)return;
-  cv.width=w;cv.height=h;cx.drawImage(vd,0,0,w,h);
-  try{const d=cx.getImageData(0,0,w,h);const c=jsQR(d.data,w,h,{inversionAttempts:'dontInvert'});
-    if(c&&c.data)camHit(c.data)}catch(e){}
+  if(!vd){camDiag('no video element','#F87171');return}
+  if(vd.readyState<2){camDiag('waiting for video…');return}
+  const w=vd.videoWidth,h=vd.videoHeight;
+  if(!w||!h){camDiag('video has no size yet');return}
+
+  // If jsQR is still downloading, say so instead of failing silently.
+  if(scanEngine!=='native'){
+    if(typeof jsQR!=='undefined') scanEngine='jsqr';
+    else if(jsqrState==='failed'){
+      camDiag('Scanner library blocked. Type the design name instead.','#F87171');return;
+    } else { camDiag('loading scanner…'); return }
+  }
+
+  frameCount++;
+  try{
+    if(scanEngine==='native'){
+      const codes=await detector.detect(vd);
+      camDiag('native scanner · '+w+'×'+h+' · frames '+frameCount);
+      if(codes&&codes.length&&codes[0].rawValue){camHit(codes[0].rawValue);return}
+    }else{
+      cv.width=w;cv.height=h;cx.drawImage(vd,0,0,w,h);
+      const d=cx.getImageData(0,0,w,h);
+      // try both inversion modes — printed labels sometimes read better inverted
+      let c=jsQR(d.data,w,h,{inversionAttempts:'dontInvert'});
+      if(!c) c=jsQR(d.data,w,h,{inversionAttempts:'attemptBoth'});
+      camDiag('jsQR scanner · '+w+'×'+h+' · frames '+frameCount);
+      if(c&&c.data){camHit(c.data);return}
+    }
+  }catch(e){
+    decodeErr=e.message||String(e);
+    camDiag('scan error: '+decodeErr,'#F87171');
+  }
 }
+
 async function camHit(raw){
   const nowT=Date.now();
   if(raw===lastCode&&nowT-lastAt<2500)return;
   lastCode=raw;lastAt=nowT;
+  camDiag('read: '+String(raw).slice(0,60),'#34D399');
   const r=await api('POST','/api/scan',{code:raw});
-  if(r.status==='design'){
-    closeCam();
-    openQtyPrompt(r.design);
-    return;
-  }
+  if(r.status==='design'){closeCam();openQtyPrompt(r.design);return}
   if(r.status==='order'){closeCam();openOrder(r.orderNo);return}
-  if(r.status==='ok'){
-    // Legacy item-based QR — treat as design scan
-    closeCam();
-    openQtyPrompt({name:r.item.design,default_rate:money(r.item.rate)});
-    return;
-  }
+  if(r.status==='ok'){closeCam();openQtyPrompt({name:r.item.design,default_rate:money(r.item.rate)});return}
+  // Unknown code — show what was actually read so the cause is obvious
   $('cam-t').style.color='#F87171';
-  $('cam-t').textContent='Design not recognised. Try typing the name instead.';
+  $('cam-t').textContent='Not a design label.';
+  camDiag('QR said: '+String(raw).slice(0,80),'#F87171');
 }
+
 function closeCam(){
   if(tick){clearInterval(tick);tick=null}
-  // Stop the stream fully so iOS releases the camera indicator light
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
   const vd=$('cam-video');if(vd)vd.srcObject=null;
-  lastCode='';
+  lastCode='';detector=null;
   $('cam').classList.remove('on');
   if(cart.length)go('counter');
 }
