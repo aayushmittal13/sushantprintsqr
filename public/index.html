@@ -1162,24 +1162,29 @@ async function openCam(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     alert('This browser cannot open the camera. Use Chrome on Android or Safari on iPhone.');return}
   $('cam').classList.add('on');$('cam-r').textContent='';$('cam-count').textContent=cart.length;
-  $('cam-t').style.color='#fff';$('cam-t').textContent='Starting the camera';
+  const db=$('cam-done-btn');if(db)db.textContent='Done';
+  $('cam-t').style.color='#fff';$('cam-t').textContent='Starting camera…';
   try{
-    // Reuse the existing stream so the browser doesn't prompt for permission every time.
-    if(!stream||stream.getTracks().every(t=>t.readyState==='ended')){
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
-    }
-    const vd=$('cam-video');vd.srcObject=stream;await vd.play();
+    // Always request a fresh stream — keeping the old one causes iOS to silently
+    // stop decoding frames after the first closeCam call.
+    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
+    const vd=$('cam-video');vd.srcObject=stream;
+    // iOS requires both play() and the playsInline attribute (set in HTML)
+    await vd.play().catch(()=>{});
     cv=document.createElement('canvas');cx=cv.getContext('2d',{willReadFrequently:true});
-    $('cam-t').textContent='Point at each piece one by one';
-    tick=setInterval(frame,150);
+    $('cam-t').textContent='Point camera at a design label';
+    tick=setInterval(frame,200);
   }catch(e){
     $('cam-t').style.color='#F87171';
-    $('cam-t').textContent=e.name==='NotAllowedError'?'Camera blocked. Allow it in browser settings and retry.'
-      :e.name==='NotFoundError'?'No camera on this device.':'Camera could not start.';
+    $('cam-t').textContent=e.name==='NotAllowedError'?'Camera blocked — allow it in browser settings, then try again.'
+      :e.name==='NotFoundError'?'No camera found on this device.':'Camera could not start: '+e.message;
   }
 }
 function frame(){
-  const vd=$('cam-video');if(!vd||vd.readyState!==4||!cv||typeof jsQR==='undefined')return;
+  const vd=$('cam-video');
+  // readyState>=2 means we have at least the current frame — iOS often stays below 4
+  if(!vd||vd.readyState<2||!cv||typeof jsQR==='undefined')return;
   const w=vd.videoWidth,h=vd.videoHeight;if(!w||!h)return;
   cv.width=w;cv.height=h;cx.drawImage(vd,0,0,w,h);
   try{const d=cx.getImageData(0,0,w,h);const c=jsQR(d.data,w,h,{inversionAttempts:'dontInvert'});
@@ -1190,29 +1195,27 @@ async function camHit(raw){
   if(raw===lastCode&&nowT-lastAt<2500)return;
   lastCode=raw;lastAt=nowT;
   const r=await api('POST','/api/scan',{code:raw});
-  const f=$('cam-f');
   if(r.status==='design'){
-    // Close camera and open the qty prompt for this design
     closeCam();
     openQtyPrompt(r.design);
     return;
   }
   if(r.status==='order'){closeCam();openOrder(r.orderNo);return}
   if(r.status==='ok'){
-    // Legacy item-based QR (old labels) — treat it as a design scan
+    // Legacy item-based QR — treat as design scan
     closeCam();
     openQtyPrompt({name:r.item.design,default_rate:money(r.item.rate)});
     return;
   }
-  // Unknown code — try treating the raw value as a design name
   $('cam-t').style.color='#F87171';
-  $('cam-t').textContent='Design not found. Try typing the name instead.';
+  $('cam-t').textContent='Design not recognised. Try typing the name instead.';
 }
 function closeCam(){
   if(tick){clearInterval(tick);tick=null}
-  // Keep the stream alive so the browser doesn't ask for permission again.
-  // Just stop the video element and hide the overlay.
-  const vd=$('cam-video');if(vd)vd.srcObject=null;lastCode='';
+  // Stop the stream fully so iOS releases the camera indicator light
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+  const vd=$('cam-video');if(vd)vd.srcObject=null;
+  lastCode='';
   $('cam').classList.remove('on');
   if(cart.length)go('counter');
 }
