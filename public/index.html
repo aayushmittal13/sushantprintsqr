@@ -477,17 +477,18 @@ th:last-child,td:last-child{padding-right:4px}
               <div class="gen-preview-c" style="font-size:10px;color:#888">Scan to add to order</div>
             </div>
           </div>
-          <div class="bar" style="margin-top:4px;gap:10px">
-            <button class="b b-ink b-big" id="gen-btn" onclick="printDesignLabel()">Print label</button>
-            <div class="f" style="margin:0;min-width:190px">
-              <select id="gen-size" style="height:56px">
+          <button class="b b-ink b-big b-full" id="gen-btn" onclick="printDesignLabel()" style="margin-top:4px">Print label</button>
+          <div class="g2" style="margin-top:12px">
+            <div class="f" style="margin:0">
+              <label for="gen-size">Label size</label>
+              <select id="gen-size" style="height:52px;width:100%">
                 <option value="label" selected>54 × 34 mm label stock</option>
                 <option value="sheet">Many on an A4 sheet, to cut</option>
               </select>
             </div>
-            <div class="f" style="margin:0;min-width:120px">
-              <input type="number" id="gen-copies" inputmode="numeric" min="1" max="50" placeholder="1" value="1" style="height:56px;text-align:center">
-              <label style="font-size:11px;color:var(--muted);display:block;text-align:center;margin-top:3px">copies</label>
+            <div class="f" style="margin:0">
+              <label for="gen-copies">Copies</label>
+              <input type="number" id="gen-copies" inputmode="numeric" min="1" max="50" placeholder="1" value="1" style="height:52px;text-align:center;width:100%">
             </div>
           </div>
         </div></div>
@@ -1590,11 +1591,11 @@ function printLabels(items,size,design,rate){
     '.lb{width:' + LW + 'mm;height:' + LH + 'mm;padding:2mm;display:flex;align-items:center;' +
       'gap:1.5mm;overflow:hidden;background:#fff;break-inside:avoid;page-break-inside:avoid}' +
     '.lb-l{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;height:100%}' +
-    '.lb-co{font-size:4.5pt;font-weight:bold;text-transform:uppercase;letter-spacing:.2px;' +
+    '.lb-co{font-size:6pt;font-weight:bold;text-transform:uppercase;letter-spacing:.2px;' +
       'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#333}' +
-    '.lb-d{font-size:7pt;font-weight:bold;line-height:1.15;margin:.8mm 0;overflow:hidden;' +
+    '.lb-d{font-size:10pt;font-weight:bold;line-height:1.15;margin:1mm 0;overflow:hidden;' +
       'display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-word}' +
-    '.lb-r{font-family:"Courier New",monospace;font-size:9pt;font-weight:bold}' +
+    '.lb-r{font-family:"Courier New",monospace;font-size:13pt;font-weight:bold}' +
     '.lb-q{flex-shrink:0;line-height:0}' +
     '.lb-q img{width:24mm;height:24mm;display:block}' +
     '@media screen{body{background:#EEE;padding:10mm}' +
