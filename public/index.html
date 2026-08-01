@@ -409,7 +409,7 @@ th:last-child,td:last-child{padding-right:4px}
 
       <!-- ─── SCAN / ORDER BUILDER ─── -->
       <section class="page" id="p-counter">
-        <div class="phead"><h1 class="ptitle">Order form</h1><div class="psub">Scan design after design without stopping — the camera keeps going. Fill in sets for each afterward, then save.</div></div>
+        <div class="phead"><h1 class="ptitle">Order form</h1><div class="psub">Scan design after design without stopping — the camera keeps going. Each starts at 1 set; adjust any that need more, then save.</div></div>
         <div id="counter-msg"></div>
 
         <!-- Scan bar -->
@@ -843,13 +843,23 @@ function inCart(){return false} // no longer meaningful but keeps camera code ha
 function addToCart(){return false}
 function cartTotal(){return 0}
 
-// Called on every scan/type hit. Adds the design as a line with sets left
-// blank — filling sets happens afterward, in one pass, not mid-scan. Returns
-// false (and does nothing) if that design is already a line, so scanning the
-// same label twice in a row is harmless.
+// Called on every scan/type hit. Adds the design as a line defaulting to 1
+// set — the common case for a quick sample order — which staff can bump up
+// afterward. Returns false (and does nothing) if the design is already a
+// line, so scanning the same label twice in a row is harmless.
 function addDesignToCart(design){
-  if(lineIdx(design.name)>=0)return false;
-  cart.push({design:design.name,qty:'',rate:money(design.default_rate)||'',remarks:''});
+  const idx=lineIdx(design.name);
+  if(idx>=0){
+    // Already on the list. If its sets are somehow blank, scanning it again
+    // is the fix — set it to 1 rather than leaving it stuck at nothing.
+    if(!String(cart[idx].qty).trim()){
+      cart[idx].qty='1';
+      drawCart();
+      return 'fixed';
+    }
+    return false;
+  }
+  cart.push({design:design.name,qty:'1',rate:money(design.default_rate)||'',remarks:''});
   drawCart();
   return true;
 }
@@ -903,7 +913,8 @@ async function typeScan(){
   const r=await api('POST','/api/scan',{code});
   if(r.status==='design'){
     const added=addDesignToCart(r.design);
-    msg('counter-msg',added?'ok':'warn',esc(r.design.name)+(added?' added.':' is already on the list.'),2500);
+    const line=added==='fixed'?' sets set to 1.':added?' added.':' is already on the list.';
+    msg('counter-msg',added?'ok':'warn',esc(r.design.name)+line,2500);
     $('scan-in').focus();return;
   }
   if(r.status==='order'){openOrder(r.orderNo);return}
@@ -911,7 +922,8 @@ async function typeScan(){
   const d=designs.find(function(x){return x.name.toLowerCase()===name.toLowerCase()});
   const design=d||{name:name,default_rate:0};
   const added=addDesignToCart(design);
-  msg('counter-msg',added?'ok':'warn',esc(design.name)+(added?' added.':' is already on the list.'),2500);
+  const line=added==='fixed'?' sets set to 1.':added?' added.':' is already on the list.';
+  msg('counter-msg',added?'ok':'warn',esc(design.name)+line,2500);
   $('scan-in').focus();
 }
 async function handleScan(r){
@@ -1095,7 +1107,10 @@ async function camHit(raw){
     : null;
   if(design){
     const added=addDesignToCart(design);
-    if(added){
+    if(added==='fixed'){
+      $('cam-t').style.color='#34D399';$('cam-t').textContent='Sets set to 1: '+design.name;
+      camDiag('fixed \u2014 keep scanning or tap Done','#34D399');
+    }else if(added){
       $('cam-t').style.color='#34D399';$('cam-t').textContent='Added: '+design.name;
       camDiag('added \u2014 keep scanning or tap Done','#34D399');
     }else{
