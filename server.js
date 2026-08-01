@@ -1,8 +1,12 @@
 const express = require('express');
 const session = require('express-session');
 const path    = require('path');
+const helmet  = require('helmet');
 
 const app          = express();
+app.set('trust proxy', 1); // behind Render's proxy — without this every request
+                            // looks like it comes from the same address, which
+                            // breaks per-IP rate limiting and secure-cookie detection
 const PORT         = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'sushant-secret-2026';
 const ADMIN_PIN    = process.env.ADMIN_PIN  || '0000';
@@ -31,18 +35,21 @@ function parseDateStr(s) {
 const money = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n) ? 0 : n; };
 
 /* ─────────────────── RATE LIMITING ─────────────────── */
+// Shared by login and by every PIN-protected action (cancel order, reset data).
+// Keyed so a run of wrong PINs doesn't also lock out password logins, and vice versa.
 
-const loginAttempts = new Map();
-function checkRate(ip) {
-  const r = loginAttempts.get(ip) || { count: 0, first: Date.now() };
-  if (Date.now() - r.first > 15 * 60 * 1000) { loginAttempts.delete(ip); return { blocked: false }; }
+const rateAttempts = new Map();
+function checkRate(key) {
+  const r = rateAttempts.get(key) || { count: 0, first: Date.now() };
+  if (Date.now() - r.first > 15 * 60 * 1000) { rateAttempts.delete(key); return { blocked: false }; }
   if (r.count >= 5) return { blocked: true, secs: Math.ceil((r.first + 15*60*1000 - Date.now()) / 1000) };
   return { blocked: false };
 }
-function failLogin(ip) {
-  const r = loginAttempts.get(ip) || { count: 0, first: Date.now() };
-  loginAttempts.set(ip, { count: r.count + 1, first: r.first });
+function failAttempt(key) {
+  const r = rateAttempts.get(key) || { count: 0, first: Date.now() };
+  rateAttempts.set(key, { count: r.count + 1, first: r.first });
 }
+function clearAttempts(key) { rateAttempts.delete(key); }
 
 /* ─────────────────── ORDER NUMBER ─────────────────── */
 
@@ -213,6 +220,19 @@ function makePgStore(pool) {
 
 /* ─────────────────── MIDDLEWARE ─────────────────── */
 
+app.use(helmet({
+  // The frontend is one inline <script> block with hundreds of onclick=""
+  // handlers and inline styles, and it loads QRious/jsQR from a CDN. A
+  // default CSP blocks all of that and would render the app blank. Enabling
+  // a real CSP here means first rewriting those inline handlers into
+  // addEventListener calls — a frontend project of its own, not a quick
+  // header change. Left off deliberately rather than shipped half-broken.
+  contentSecurityPolicy: false,
+  // Also off: COEP requires cross-origin resources (our QRious/jsQR CDN
+  // scripts) to send matching CORP/CORS headers, which those CDNs don't.
+  // Turning this on would silently block the QR library from loading.
+  crossOriginEmbedderPolicy: false
+}));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
@@ -220,7 +240,12 @@ app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000*60*60*24*30, httpOnly: true, sameSite: 'lax' }
+  cookie: {
+    maxAge: 1000*60*60*24*30, httpOnly: true, sameSite: 'lax',
+    // Only require HTTPS for the cookie when we're not on localhost, so local
+    // testing over plain http still works. Render always serves over HTTPS.
+    secure: !/@(localhost|127\.0\.0\.1)[:\/]/.test(process.env.DATABASE_URL || '')
+  }
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -239,15 +264,16 @@ function wrap(fn) {
 
 app.post('/api/login', (req, res) => {
   const ip = req.ip || 'unknown';
-  const lim = checkRate(ip);
+  const key = 'login:' + ip;
+  const lim = checkRate(key);
   if (lim.blocked) return res.status(429).json({ error: `Too many attempts. Try again in ${lim.secs} seconds.` });
   if (req.body.password === (process.env.APP_PASSWORD || '')) {
-    loginAttempts.delete(ip);
+    clearAttempts(key);
     req.session.authenticated = true;
     return res.json({ ok: true });
   }
-  failLogin(ip);
-  const r = loginAttempts.get(ip) || { count: 0 };
+  failAttempt(key);
+  const r = rateAttempts.get(key) || { count: 0 };
   res.status(401).json({ error: 'Wrong password', attemptsLeft: Math.max(0, 5 - r.count) });
 });
 app.post('/api/logout', (req, res) => { if (req.session) req.session.destroy(() => {}); res.json({ ok: true }); });
@@ -466,7 +492,11 @@ app.get('/api/orders/:orderNo', auth, wrap(async (req, res) => {
 app.post('/api/orders/:orderNo/cancel', auth, wrap(async (req, res) => {
   const { run, get } = req.app.locals;
   const orderNo = decodeURIComponent(req.params.orderNo);
-  if (req.body.pin !== ADMIN_PIN) return res.json({ ok: false, error: 'wrong_pin' });
+  const rkey = 'pin:' + (req.ip || 'unknown');
+  const rlim = checkRate(rkey);
+  if (rlim.blocked) return res.status(429).json({ ok: false, error: `Too many wrong PINs. Try again in ${rlim.secs} seconds.` });
+  if (req.body.pin !== ADMIN_PIN) { failAttempt(rkey); return res.json({ ok: false, error: 'wrong_pin' }); }
+  clearAttempts(rkey);
   const order = await get(`SELECT status FROM orders WHERE order_no=$1`, [orderNo]);
   if (!order)                       return res.json({ ok: false, error: 'not_found' });
   if (order.status === 'Cancelled') return res.json({ ok: false, error: 'already_cancelled' });
@@ -583,14 +613,22 @@ app.post('/api/settings', auth, wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 app.post('/api/verify-pin', auth, (req, res) => {
-  if (req.body.pin === CHANGE_PIN) return res.json({ ok: true });
+  const rkey = 'pin:' + (req.ip || 'unknown');
+  const rlim = checkRate(rkey);
+  if (rlim.blocked) return res.status(429).json({ ok: false, error: `Too many wrong PINs. Try again in ${rlim.secs} seconds.` });
+  if (req.body.pin === CHANGE_PIN) { clearAttempts(rkey); return res.json({ ok: true }); }
+  failAttempt(rkey);
   res.status(401).json({ ok: false, error: 'Wrong PIN' });
 });
 
 // POST /api/reset — wipe test data. Requires the admin PIN and a typed phrase.
 // { pin, confirm:'DELETE ALL', alsoMasters:bool }
 app.post('/api/reset', auth, wrap(async (req, res) => {
-  if (req.body.pin !== ADMIN_PIN)      return res.status(401).json({ error: 'Wrong admin PIN' });
+  const rkey = 'pin:' + (req.ip || 'unknown');
+  const rlim = checkRate(rkey);
+  if (rlim.blocked) return res.status(429).json({ error: `Too many wrong PINs. Try again in ${rlim.secs} seconds.` });
+  if (req.body.pin !== ADMIN_PIN) { failAttempt(rkey); return res.status(401).json({ error: 'Wrong admin PIN' }); }
+  clearAttempts(rkey);
   if (req.body.confirm !== 'DELETE ALL') return res.status(400).json({ error: 'Type DELETE ALL exactly to confirm' });
   const { run, get } = req.app.locals;
 
