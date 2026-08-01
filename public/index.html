@@ -86,6 +86,10 @@ a{color:var(--plum);text-decoration:none}
 
 /* Mobile */
 @media(max-width:860px){
+  .scanbar{flex-wrap:wrap}
+  .scanbar input{flex:1 1 100%;order:1}
+  .scanbar button{order:2}
+  .scanbar button:last-child{flex:1}
   .nav{display:none}
   .main{margin-left:0;padding-bottom:76px}
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--ink);
@@ -413,7 +417,7 @@ th:last-child,td:last-child{padding-right:4px}
         <div id="counter-msg"></div>
 
         <!-- Scan bar -->
-        <div class="card"><div class="card-b" style="display:flex;align-items:center;gap:10px">
+        <div class="card"><div class="card-b scanbar" style="display:flex;align-items:center;gap:10px">
           <button class="b b-out" onclick="openCam()" title="Open camera scanner" style="flex-shrink:0;height:48px;padding:0 16px">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:20px;vertical-align:middle"><path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" stroke-linecap="round"/><path d="M4 12h16" stroke-linecap="round"/></svg>
           </button>
@@ -428,7 +432,7 @@ th:last-child,td:last-child{padding-right:4px}
             <span class="cart-h-t">Design lines</span>
             <span class="cart-count" id="cart-count" style="font-size:13px;color:var(--muted)">0 lines</span>
           </div>
-          <div id="cart-list"></div>
+          <div class="tw" id="cart-list"></div>
           <div id="cart-foot" style="display:none;padding:16px 0 4px">
             <div class="cart-actions" style="margin-top:8px">
               <button class="b b-ink b-big b-full" onclick="openCheckout()">Review &amp; save order form</button>
